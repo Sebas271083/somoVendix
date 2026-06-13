@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p backend/src/config backend/src/models backend/src/controllers backend/src/routes backend/src/middleware)",
+      "Bash(mkdir -p frontend/src/components/layout frontend/src/components/pos frontend/src/components/ui frontend/src/pages frontend/src/context frontend/src/services frontend/src/hooks)",
+      "Bash(curl -s http://localhost:3008/api/health)",
+      "Bash(curl -s -X POST http://localhost:3008/api/auth/login -H \"Content-Type: application/json\" -d \"{\\\\\"email\\\\\":\\\\\"admin@papelera.com\\\\\",\\\\\"password\\\\\":\\\\\"admin123\\\\\"}\")",
+      "Bash(mysql -u root -proot -e \"SHOW DATABASES;\")",
+      "Bash(mysql -u root -proot)",
+      "Bash(node -e \"import\\('bcryptjs'\\).then\\(m => m.default.hash\\('admin123', 10\\).then\\(h => console.log\\(h\\)\\)\\)\")",
+      "Bash(mysql -u root -proot pos_papelera -e 'UPDATE users SET password='\\\\''$2a$10$VWu7N84x4agw55jyzUaeI..lr04Y2HCaa1RGWBGZsrZ/sgm8TPTXi'\\\\'' WHERE email IN \\('\\\\''admin@papelera.com'\\\\'','\\\\''maria@papelera.com'\\\\''\\);')",
+      "Bash(curl -s http://localhost:3001/api/health)",
+      "Bash(curl -s -X POST http://localhost:3001/api/auth/login -H \"Content-Type: application/json\" -d \"{\\\\\"email\\\\\":\\\\\"admin@papelera.com\\\\\",\\\\\"password\\\\\":\\\\\"admin123\\\\\"}\")",
+      "Bash(Get-ChildItem -Path \"d:\\\\programacion\\\\puntoVentaPapeleras\" -Recurse -Force)",
+      "Bash(Select-Object -Property FullName)",
+      "Bash(ConvertTo-Csv -NoTypeInformation)",
+      "Bash(Out-String)",
+      "Bash(mysql -u root -proot pos_papelera)",
+      "Bash(mysql -u root -proot pos_papelera -e \"SHOW TABLES;\")",
+      "Bash(curl -s http://localhost:3008/api/reports/dashboard -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBwYXBlbGVyYS5jb20iLCJyb2xlIjoiYWRtaW4iLCJicmFuY2hfaWQiOjEsImlhdCI6MTc3OTc1NTUxOCwiZXhwIjoxNzc5Nzg0MzE4fQ.lEheB-NwHuzO4fhYTHGZcY88E6vKV-2LzRYSU8PKtxQ')",
+      "Bash(curl -s http://localhost:3008/api/cash-flow/daily?date=2026-05-26 -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBwYXBlbGVyYS5jb20iLCJyb2xlIjoiYWRtaW4iLCJicmFuY2hfaWQiOjEsImlhdCI6MTc3OTc1NTUxOCwiZXhwIjoxNzc5Nzg0MzE4fQ.lEheB-NwHuzO4fhYTHGZcY88E6vKV-2LzRYSU8PKtxQ')",
+      "Bash(curl -s 'http://localhost:3008/api/cash-flow/period?from=2026-04-26&to=2026-05-26' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBwYXBlbGVyYS5jb20iLCJyb2xlIjoiYWRtaW4iLCJicmFuY2hfaWQiOjEsImlhdCI6MTc3OTc1NTUxOCwiZXhwIjoxNzc5Nzg0MzE4fQ.lEheB-NwHuzO4fhYTHGZcY88E6vKV-2LzRYSU8PKtxQ')",
+      "Bash(curl -s http://localhost:3008/api/reports/inventory/value -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBwYXBlbGVyYS5jb20iLCJyb2xlIjoiYWRtaW4iLCJicmFuY2hfaWQiOjEsImlhdCI6MTc3OTc1NTUxOCwiZXhwIjoxNzc5Nzg0MzE4fQ.lEheB-NwHuzO4fhYTHGZcY88E6vKV-2LzRYSU8PKtxQ')",
+      "Bash(curl -s http://localhost:3008/api/settings -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBwYXBlbGVyYS5jb20iLCJyb2xlIjoiYWRtaW4iLCJicmFuY2hfaWQiOjEsImlhdCI6MTc3OTc1NTUxOCwiZXhwIjoxNzc5Nzg0MzE4fQ.lEheB-NwHuzO4fhYTHGZcY88E6vKV-2LzRYSU8PKtxQ')",
+      "Bash(mysql -u root -proot pos_papelera -e \"SELECT id, name, subdomain, plan_id, status FROM tenants; SELECT id, name, slug, max_products, max_users FROM plans; SELECT column_name FROM information_schema.columns WHERE table_name='users' AND table_schema='pos_papelera' AND column_name='tenant_id';\")"
+    ]
+  }
+}
