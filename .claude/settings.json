@@ -22,7 +22,10 @@
       "Bash(curl -s 'http://localhost:3008/api/cash-flow/period?from=2026-04-26&to=2026-05-26' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBwYXBlbGVyYS5jb20iLCJyb2xlIjoiYWRtaW4iLCJicmFuY2hfaWQiOjEsImlhdCI6MTc3OTc1NTUxOCwiZXhwIjoxNzc5Nzg0MzE4fQ.lEheB-NwHuzO4fhYTHGZcY88E6vKV-2LzRYSU8PKtxQ')",
       "Bash(curl -s http://localhost:3008/api/reports/inventory/value -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBwYXBlbGVyYS5jb20iLCJyb2xlIjoiYWRtaW4iLCJicmFuY2hfaWQiOjEsImlhdCI6MTc3OTc1NTUxOCwiZXhwIjoxNzc5Nzg0MzE4fQ.lEheB-NwHuzO4fhYTHGZcY88E6vKV-2LzRYSU8PKtxQ')",
       "Bash(curl -s http://localhost:3008/api/settings -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBwYXBlbGVyYS5jb20iLCJyb2xlIjoiYWRtaW4iLCJicmFuY2hfaWQiOjEsImlhdCI6MTc3OTc1NTUxOCwiZXhwIjoxNzc5Nzg0MzE4fQ.lEheB-NwHuzO4fhYTHGZcY88E6vKV-2LzRYSU8PKtxQ')",
-      "Bash(mysql -u root -proot pos_papelera -e \"SELECT id, name, subdomain, plan_id, status FROM tenants; SELECT id, name, slug, max_products, max_users FROM plans; SELECT column_name FROM information_schema.columns WHERE table_name='users' AND table_schema='pos_papelera' AND column_name='tenant_id';\")"
+      "Bash(mysql -u root -proot pos_papelera -e \"SELECT id, name, subdomain, plan_id, status FROM tenants; SELECT id, name, slug, max_products, max_users FROM plans; SELECT column_name FROM information_schema.columns WHERE table_name='users' AND table_schema='pos_papelera' AND column_name='tenant_id';\")",
+      "Bash(npm run *)",
+      "Bash(node -e \"const fs=require\\('fs'\\); const css=fs.readFileSync\\('dist/assets/index-CytqmMh3.css','utf8'\\); const matches=css.match\\(/\\\\.dark[^{]*/g\\)||[]; console.log\\('Dark selectors found:', matches.length\\); matches.slice\\(0,10\\).forEach\\(m=>console.log\\(m.trim\\(\\)\\)\\);\")",
+      "Bash(node -e \"const fs=require\\('fs'\\); const css=fs.readFileSync\\('dist/assets/index-CytqmMh3.css','utf8'\\); const matches=css.match\\(/\\\\.dark[^}]+\\\\}/g\\)||[]; console.log\\('Dark blocks found:', matches.length\\); matches.slice\\(0,15\\).forEach\\(m=>console.log\\(m.substring\\(0,120\\)\\)\\);\")"
     ]
   }
 }

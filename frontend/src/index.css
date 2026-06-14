@@ -7,17 +7,17 @@
     box-sizing: border-box;
   }
   body {
-    @apply bg-gray-50 text-gray-900 font-sans dark:bg-gray-900 dark:text-gray-100;
+    @apply bg-gray-50 text-gray-900 font-sans;
   }
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
   ::-webkit-scrollbar-track {
-    @apply bg-gray-100 dark:bg-gray-800;
+    @apply bg-gray-100;
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-gray-300 rounded-full dark:bg-gray-600;
+    @apply bg-gray-300 rounded-full;
   }
 }
 
@@ -29,7 +29,7 @@
     @apply btn bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
   }
   .btn-secondary {
-    @apply btn bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-400 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600;
+    @apply btn bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-400;
   }
   .btn-danger {
     @apply btn bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
@@ -38,12 +38,43 @@
     @apply btn bg-green-600 text-white hover:bg-green-700 focus:ring-green-500;
   }
   .input {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400;
+    @apply w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
   }
   .card {
-    @apply bg-white rounded-xl shadow-sm border border-gray-100 dark:bg-gray-800 dark:border-gray-700;
+    @apply bg-white rounded-xl shadow-sm border border-gray-100;
   }
   .badge {
     @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium;
   }
+}
+
+/* Dark mode overrides — @apply dark: no funciona correctamente en Tailwind v3 */
+.dark body {
+  background-color: #111827;
+  color: #f3f4f6;
+}
+.dark ::-webkit-scrollbar-track {
+  background-color: #1f2937;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background-color: #4b5563;
+}
+.dark .card {
+  background-color: #1f2937;
+  border-color: #374151;
+}
+.dark .input {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+.dark .input::placeholder {
+  color: #9ca3af;
+}
+.dark .btn-secondary {
+  background-color: #374151;
+  color: #e5e7eb;
+}
+.dark .btn-secondary:hover {
+  background-color: #4b5563;
 }
