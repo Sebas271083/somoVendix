@@ -35,6 +35,7 @@ import quoteRoutes from './routes/quoteRoutes.js';
 import installmentRoutes from './routes/installmentRoutes.js';
 import afipRoutes from './routes/afipRoutes.js';
 import { emailService } from './services/emailService.js';
+import { initDb } from '../initDb.js';
 
 dotenv.config();
 
@@ -100,29 +101,37 @@ app.use('/api/afip', afipRoutes);
 
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
+// Inicializar/migrar BD antes de aceptar tráfico
+initDb()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Servidor corriendo en http://localhost:${PORT}`);
 
-  const ONE_HOUR = 60 * 60 * 1000;
+      const ONE_HOUR = 60 * 60 * 1000;
 
-  // Verificar trials vencidos cada hora
-  setInterval(async () => {
-    try {
-      await TenantModel.checkTrials();
-    } catch (err) {
-      console.error('[trial-check]', err.message);
-    }
-  }, ONE_HOUR);
+      // Verificar trials vencidos cada hora
+      setInterval(async () => {
+        try {
+          await TenantModel.checkTrials();
+        } catch (err) {
+          console.error('[trial-check]', err.message);
+        }
+      }, ONE_HOUR);
 
-  // Alertas de stock bajo cada 4 horas
-  const FOUR_HOURS = 4 * ONE_HOUR;
-  setInterval(async () => {
-    try {
-      await emailService.checkAndSendAlerts();
-    } catch (err) {
-      console.error('[stock-alert]', err.message);
-    }
-  }, FOUR_HOURS);
-});
+      // Alertas de stock bajo cada 4 horas
+      const FOUR_HOURS = 4 * ONE_HOUR;
+      setInterval(async () => {
+        try {
+          await emailService.checkAndSendAlerts();
+        } catch (err) {
+          console.error('[stock-alert]', err.message);
+        }
+      }, FOUR_HOURS);
+    });
+  })
+  .catch(err => {
+    console.error('❌ No se pudo inicializar la BD, servidor no arrancó:', err.message);
+    process.exit(1);
+  });
 
 export default app;

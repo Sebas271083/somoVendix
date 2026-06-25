@@ -8,34 +8,46 @@ dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+const DB_NAME = process.env.DB_NAME || 'pos_papelera';
+
 async function runSql(connection, filePath) {
   const raw = fs.readFileSync(filePath, 'utf8');
-  // Eliminar líneas de comentario antes de dividir por ;
-  const sql = raw
-    .split('\n')
-    .filter(line => !line.trim().startsWith('--'))
-    .join('\n');
 
-  const statements = sql
+  // Strip single-line comments and filter out CREATE DATABASE / USE statements
+  // because we handle those ourselves using DB_NAME env var
+  const lines = raw
+    .split('\n')
+    .filter(line => {
+      const t = line.trim();
+      if (t.startsWith('--')) return false;
+      if (/^CREATE\s+DATABASE/i.test(t)) return false;
+      if (/^USE\s+/i.test(t)) return false;
+      return true;
+    });
+
+  const statements = lines
+    .join('\n')
     .split(';')
     .map(s => s.trim())
     .filter(s => s.length > 0);
+
+  const ignorable = new Set([
+    'ER_DUP_FIELDNAME',
+    'ER_DUP_KEYNAME',
+    'ER_TABLE_EXISTS_ERROR',
+    'ER_DUP_ENTRY',
+    'ER_MULTIPLE_PRI_KEY',
+    'ER_CANT_DROP_FIELD_OR_KEY',
+  ]);
 
   for (const stmt of statements) {
     try {
       await connection.query(stmt);
     } catch (err) {
-      // Ignorar errores cuando el objeto ya existe
-      const ignorable = [
-        'ER_DUP_FIELDNAME',        // columna ya existe
-        'ER_DUP_KEYNAME',          // índice ya existe
-        'ER_TABLE_EXISTS_ERROR',   // tabla ya existe
-        'ER_DUP_ENTRY',            // dato de seed ya insertado
-        'ER_MULTIPLE_PRI_KEY',     // PK ya definida
-      ];
-      if (ignorable.includes(err.code)) {
-        console.log(`  ⚠  Ya existe (skip): ${stmt.substring(0, 70)}...`);
+      if (ignorable.has(err.code)) {
+        console.log(`  ⚠  Ya existe (skip): ${stmt.substring(0, 80).replace(/\n/g, ' ')}…`);
       } else {
+        console.error(`\n❌ Error en statement:\n${stmt}\n`);
         throw err;
       }
     }
@@ -43,75 +55,86 @@ async function runSql(connection, filePath) {
 }
 
 async function init() {
-  console.log('Conectando a MySQL...');
+  console.log(`\n🔧 Iniciando configuración de BD (${DB_NAME}) en ${process.env.DB_HOST}:${process.env.DB_PORT || 3306}…`);
 
-  // Conectar sin especificar base de datos para poder crearla
-  const connection = await mysql.createConnection({
-    host: process.env.DB_HOST,
-    port: parseInt(process.env.DB_PORT || '3306'),
-    user: process.env.DB_USER,
+  // Paso 1: conectar SIN base de datos para crearla si no existe
+  const rootConn = await mysql.createConnection({
+    host:     process.env.DB_HOST,
+    port:     parseInt(process.env.DB_PORT || '3306'),
+    user:     process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     multipleStatements: false,
   });
 
   try {
-    console.log(`Conexión exitosa a ${process.env.DB_HOST}:${process.env.DB_PORT}`);
+    await rootConn.query(
+      `CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
+    );
+    console.log(`  ✓ Base de datos "${DB_NAME}" lista`);
+  } catch (err) {
+    // Algunos hostings no permiten CREATE DATABASE — si ya existe, continuamos
+    if (err.code === 'ER_DBACCESS_DENIED_ERROR' || err.code === 'ER_ACCESS_DENIED_ERROR') {
+      console.log(`  ⚠  Sin permisos para CREATE DATABASE — asumiendo que "${DB_NAME}" ya existe`);
+    } else {
+      throw err;
+    }
+  } finally {
+    await rootConn.end();
+  }
 
-    console.log('\n1/2 Ejecutando schema.sql (tablas base)...');
-    await runSql(connection, path.join(__dirname, 'schema.sql'));
-    console.log('   ✓ schema.sql completado');
+  // Paso 2: reconectar CON la base de datos especificada
+  const conn = await mysql.createConnection({
+    host:     process.env.DB_HOST,
+    port:     parseInt(process.env.DB_PORT || '3306'),
+    user:     process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: DB_NAME,
+    multipleStatements: false,
+  });
 
-    console.log('\n2/2 Ejecutando saas_migrate.sql (tablas SaaS)...');
-    await runSql(connection, path.join(__dirname, 'saas_migrate.sql'));
-    console.log('   ✓ saas_migrate.sql completado');
+  const migrations = [
+    ['schema.sql',               'Tablas base'],
+    ['saas_migrate.sql',         'Tablas SaaS / tenants'],
+    ['migrate_v2.sql',           'Mejoras POS'],
+    ['migrate_v3.sql',           'Devoluciones'],
+    ['migrate_billing.sql',      'Planes y billing'],
+    ['migrate_stock_advanced.sql','Depósitos, stocktaking, FIFO'],
+    ['migrate_crm.sql',          'CRM, campañas'],
+    ['migrate_v4.sql',           'Presupuestos, cuotas, notas de crédito'],
+    ['migrate_v5.sql',           'AFIP facturación electrónica'],
+    ['migrate_v6.sql',           'Caja mejorada'],
+    ['migrate_v7.sql',           'Gastos avanzados'],
+    ['migrate_variants.sql',     'Variantes de producto'],
+  ];
 
-    console.log('\n3/4 Ejecutando migrate_v2.sql (mejoras POS)...');
-    await runSql(connection, path.join(__dirname, 'migrate_v2.sql'));
-    console.log('   ✓ migrate_v2.sql completado');
+  try {
+    for (let i = 0; i < migrations.length; i++) {
+      const [file, desc] = migrations[i];
+      const filePath = path.join(__dirname, file);
+      if (!fs.existsSync(filePath)) {
+        console.log(`  ⏭  ${file} no encontrado, saltando…`);
+        continue;
+      }
+      console.log(`  [${i + 1}/${migrations.length}] ${desc}…`);
+      await runSql(conn, filePath);
+      console.log(`         ✓ ${file}`);
+    }
 
-    console.log('\n4/4 Ejecutando migrate_v3.sql (devoluciones)...');
-    await runSql(connection, path.join(__dirname, 'migrate_v3.sql'));
-    console.log('   ✓ migrate_v3.sql completado');
-
-    console.log('\n5/5 Ejecutando migrate_billing.sql (precios de planes)...');
-    await runSql(connection, path.join(__dirname, 'migrate_billing.sql'));
-    console.log('   ✓ migrate_billing.sql completado');
-
-    console.log('\n6/6 Ejecutando migrate_stock_advanced.sql (depósitos, stocktaking, FIFO)...');
-    await runSql(connection, path.join(__dirname, 'migrate_stock_advanced.sql'));
-    console.log('   ✓ migrate_stock_advanced.sql completado');
-
-    console.log('\n7/7 Ejecutando migrate_crm.sql (CRM, fidelización, campañas)...');
-    await runSql(connection, path.join(__dirname, 'migrate_crm.sql'));
-    console.log('   ✓ migrate_crm.sql completado');
-
-    console.log('\n8/9 Ejecutando migrate_v4.sql (presupuestos, cuotas, notas de crédito)...');
-    await runSql(connection, path.join(__dirname, 'migrate_v4.sql'));
-    console.log('   ✓ migrate_v4.sql completado');
-
-    console.log('\n9/10 Ejecutando migrate_v5.sql (AFIP facturación electrónica)...');
-    await runSql(connection, path.join(__dirname, 'migrate_v5.sql'));
-    console.log('   ✓ migrate_v5.sql completado');
-
-    console.log('\n10/11 Ejecutando migrate_v6.sql (caja mejorada: múltiples cajeros, desglose)...');
-    await runSql(connection, path.join(__dirname, 'migrate_v6.sql'));
-    console.log('   ✓ migrate_v6.sql completado');
-
-    console.log('\n11/11 Ejecutando migrate_v7.sql (gastos: comprobante, recurrencia, aprobación)...');
-    await runSql(connection, path.join(__dirname, 'migrate_v7.sql'));
-    console.log('   ✓ migrate_v7.sql completado');
-
-    console.log('\n✅ Base de datos inicializada correctamente.');
+    console.log('\n✅ Base de datos configurada correctamente.');
     console.log('   Credenciales de acceso inicial:');
     console.log('   - Admin tenant:  admin@papelera.com  / admin123');
     console.log('   - Super admin:   superadmin@gestix.app / gestix2024');
   } finally {
-    await connection.end();
+    await conn.end();
   }
 }
 
-init().catch(err => {
-  console.error('\n❌ Error al inicializar la base de datos:');
-  console.error(err.message);
-  process.exit(1);
-});
+export { init as initDb };
+
+// Si se ejecuta directamente (node initDb.js), correr init
+if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
+  init().catch(err => {
+    console.error('\n❌ Error al inicializar la base de datos:', err.message);
+    process.exit(1);
+  });
+}
