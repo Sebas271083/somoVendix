@@ -60,4 +60,31 @@ export const reportController = {
       res.json(await ReportModel.getInventoryValue(req.tenant.id));
     } catch (err) { next(err); }
   },
+
+  async returnsSummary(req, res, next) {
+    try {
+      const { from, to } = { ...defaultRange(), ...req.query };
+      res.json(await ReportModel.getReturnsSummary(from, to, req.tenant.id));
+    } catch (err) { next(err); }
+  },
+
+  async incomeStatement(req, res, next) {
+    try {
+      const { from, to } = { ...defaultRange(), ...req.query };
+      res.json(await ReportModel.getIncomeStatement(from, to, req.tenant.id));
+    } catch (err) { next(err); }
+  },
+
+  async comparison(req, res, next) {
+    try {
+      const { from, to } = { ...defaultRange(), ...req.query };
+      res.json(await ReportModel.getComparison(from, to, req.tenant.id));
+    } catch (err) { next(err); }
+  },
+
+  async projection(req, res, next) {
+    try {
+      res.json(await ReportModel.getProjection(req.tenant.id));
+    } catch (err) { next(err); }
+  },
 };

@@ -13,5 +13,9 @@ router.get('/sales/category', reportController.salesByCategory);
 router.get('/products/top', reportController.topProducts);
 router.get('/customers/top', reportController.topCustomers);
 router.get('/inventory/value', reportController.inventoryValue);
+router.get('/returns/summary', reportController.returnsSummary);
+router.get('/income-statement', reportController.incomeStatement);
+router.get('/comparison', reportController.comparison);
+router.get('/projection', reportController.projection);
 
 export default router;

@@ -1,9 +1,18 @@
 import { SaleModel } from '../models/SaleModel.js';
+import { emailService } from '../services/emailService.js';
+import { query } from '../config/database.js';
+import { afipService } from '../services/afipService.js';
 
 export const saleController = {
   async list(req, res, next) {
     try {
-      res.json(await SaleModel.findAll({ ...req.query, tenant_id: req.tenant.id }));
+      const sales = await SaleModel.findAll({ ...req.query, tenant_id: req.tenant.id });
+      // When searching by ticket number, hydrate items on each result
+      if (req.query.ticket_number && sales.length) {
+        const hydrated = await Promise.all(sales.map((s) => SaleModel.findById(s.id)));
+        return res.json(hydrated.filter(Boolean));
+      }
+      res.json(sales);
     } catch (err) { next(err); }
   },
 
@@ -24,7 +33,21 @@ export const saleController = {
       };
       const sale_id = await SaleModel.create(saleData);
       const sale = await SaleModel.findById(sale_id);
-      res.status(201).json(sale);
+
+      // Request CAE from AFIP (silent fail — sale is always valid without it)
+      let afip = null;
+      try {
+        afip = await afipService.requestCAE(req.tenant.id, sale);
+      } catch (afipErr) {
+        console.error('[AFIP] CAE request failed:', afipErr.message);
+      }
+
+      res.status(201).json({ ...sale, afip });
+
+      // Send receipt email (fire-and-forget)
+      if (sale?.customer_email) {
+        emailService.sendSaleReceipt(sale.customer_email, sale, req.tenant.name).catch(() => {});
+      }
     } catch (err) { next(err); }
   },
 

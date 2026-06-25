@@ -1,4 +1,6 @@
 import { CustomerModel } from '../models/CustomerModel.js';
+import { CustomerInteractionModel } from '../models/CustomerInteractionModel.js';
+import { LoyaltyModel } from '../models/LoyaltyModel.js';
 
 export const customerController = {
   async list(req, res, next) {
@@ -18,16 +20,14 @@ export const customerController = {
   async create(req, res, next) {
     try {
       const id = await CustomerModel.create({ ...req.body, tenant_id: req.tenant.id });
-      const customer = await CustomerModel.findById(id);
-      res.status(201).json(customer);
+      res.status(201).json(await CustomerModel.findById(id));
     } catch (err) { next(err); }
   },
 
   async update(req, res, next) {
     try {
       await CustomerModel.update(req.params.id, req.body);
-      const customer = await CustomerModel.findById(req.params.id);
-      res.json(customer);
+      res.json(await CustomerModel.findById(req.params.id));
     } catch (err) { next(err); }
   },
 
@@ -46,6 +46,86 @@ export const customerController = {
   async accountSummary(req, res, next) {
     try {
       res.json(await CustomerModel.getAccountSummary(req.params.id));
+    } catch (err) { next(err); }
+  },
+
+  async metrics(req, res, next) {
+    try {
+      res.json(await CustomerModel.getMetrics(req.params.id));
+    } catch (err) { next(err); }
+  },
+
+  // CRM interactions
+  async listInteractions(req, res, next) {
+    try {
+      res.json(await CustomerInteractionModel.findByCustomer(req.params.id));
+    } catch (err) { next(err); }
+  },
+
+  async createInteraction(req, res, next) {
+    try {
+      const id = await CustomerInteractionModel.create({
+        ...req.body,
+        customer_id: req.params.id,
+        tenant_id: req.tenant.id,
+        user_id: req.user.id,
+      });
+      res.status(201).json({ id });
+    } catch (err) { next(err); }
+  },
+
+  async deleteInteraction(req, res, next) {
+    try {
+      await CustomerInteractionModel.delete(req.params.intId);
+      res.json({ ok: true });
+    } catch (err) { next(err); }
+  },
+
+  // Loyalty
+  async loyaltyHistory(req, res, next) {
+    try {
+      res.json(await LoyaltyModel.getHistory(req.params.id));
+    } catch (err) { next(err); }
+  },
+
+  async loyaltyAdjust(req, res, next) {
+    try {
+      const newBalance = await LoyaltyModel.manualAdjust({
+        tenant_id: req.tenant.id,
+        customer_id: req.params.id,
+        points: req.body.points,
+        notes: req.body.notes,
+        user_id: req.user.id,
+      });
+      res.json({ balance: newBalance });
+    } catch (err) { next(err); }
+  },
+
+  async loyaltyPreview(req, res, next) {
+    try {
+      res.json(await LoyaltyModel.previewRedemption(req.tenant.id, req.params.id, req.body.points));
+    } catch (err) { next(err); }
+  },
+
+  // Price lists
+  async getPriceLists(req, res, next) {
+    try {
+      res.json(await CustomerModel.getPriceLists(req.tenant.id));
+    } catch (err) { next(err); }
+  },
+
+  async updatePriceList(req, res, next) {
+    try {
+      await CustomerModel.updatePriceList(req.tenant.id, req.params.segment, req.body.discount_pct);
+      res.json({ ok: true });
+    } catch (err) { next(err); }
+  },
+
+  // CSV import
+  async importCSV(req, res, next) {
+    try {
+      const results = await CustomerModel.importMany(req.body.customers, req.tenant.id);
+      res.json(results);
     } catch (err) { next(err); }
   },
 };

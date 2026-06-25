@@ -19,7 +19,7 @@ export const UserModel = {
 
   async findAll(tenant_id) {
     return query(
-      `SELECT u.id, u.name, u.email, u.role, u.active
+      `SELECT u.id, u.name, u.email, u.role, u.active, u.created_at
        FROM users u
        WHERE u.tenant_id = ?
        ORDER BY u.name`,

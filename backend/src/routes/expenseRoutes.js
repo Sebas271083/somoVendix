@@ -12,6 +12,9 @@ router.get('/:id', expenseController.get);
 router.post('/', expenseController.create);
 router.put('/:id', expenseController.update);
 router.patch('/:id/pay', expenseController.markPaid);
+router.post('/:id/upload-receipt', expenseController.uploadReceipt);
+router.patch('/:id/approve', expenseController.approve);
+router.patch('/:id/reject', expenseController.reject);
 router.delete('/:id', expenseController.delete);
 
 export default router;
