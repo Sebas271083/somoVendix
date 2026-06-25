@@ -340,27 +340,26 @@ export const ReportModel = {
   },
 
   async getDashboardStats(tenant_id) {
-    const today = new Date().toISOString().split('T')[0];
-    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-      .toISOString().split('T')[0];
-
+    // Use CURDATE() / DATE_FORMAT(CURDATE(),...) so the comparison uses the DB server's
+    // local date — avoids mismatch when Node.js toISOString() gives UTC but timestamps
+    // are stored in local timezone.
     const [todayStats] = await query(
       `SELECT COUNT(*) AS sales_count, COALESCE(SUM(total),0) AS sales_total, COALESCE(AVG(total),0) AS avg_ticket
-       FROM sales WHERE tenant_id = ? AND DATE(created_at) = ? AND status = 'completed'`,
-      [tenant_id, today]
+       FROM sales WHERE tenant_id = ? AND DATE(created_at) = CURDATE() AND status = 'completed'`,
+      [tenant_id]
     );
     const [todayProfit] = await query(
       `SELECT COALESCE(SUM(si.subtotal - si.quantity * p.cost), 0) AS profit
        FROM sales s
        JOIN sale_items si ON si.sale_id = s.id
        JOIN products p ON p.id = si.product_id
-       WHERE s.tenant_id = ? AND DATE(s.created_at) = ? AND s.status = 'completed'`,
-      [tenant_id, today]
+       WHERE s.tenant_id = ? AND DATE(s.created_at) = CURDATE() AND s.status = 'completed'`,
+      [tenant_id]
     );
     const [monthStats] = await query(
       `SELECT COUNT(*) AS sales_count, COALESCE(SUM(total),0) AS sales_total
-       FROM sales WHERE tenant_id = ? AND DATE(created_at) >= ? AND status = 'completed'`,
-      [tenant_id, monthStart]
+       FROM sales WHERE tenant_id = ? AND DATE(created_at) >= DATE_FORMAT(CURDATE(),'%Y-%m-01') AND status = 'completed'`,
+      [tenant_id]
     );
     const [lowStockCount] = await query(
       `SELECT COUNT(*) AS count FROM products WHERE tenant_id = ? AND stock <= min_stock AND active = 1`,
@@ -376,9 +375,9 @@ export const ReportModel = {
     );
     const paymentMethods = await query(
       `SELECT payment_method, COUNT(*) AS count, COALESCE(SUM(total),0) AS total
-       FROM sales WHERE tenant_id = ? AND DATE(created_at) = ? AND status = 'completed'
+       FROM sales WHERE tenant_id = ? AND DATE(created_at) = CURDATE() AND status = 'completed'
        GROUP BY payment_method ORDER BY total DESC`,
-      [tenant_id, today]
+      [tenant_id]
     );
     const [openRegister] = await query(
       `SELECT cr.id, cr.opening_amount, cr.opened_at, u.name AS user_name
