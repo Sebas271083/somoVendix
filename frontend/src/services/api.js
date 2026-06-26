@@ -11,7 +11,13 @@ export const getSubdomain = () => {
   return localStorage.getItem('gestix_subdomain') || 'demo';
 };
 
-const api = axios.create({ baseURL: '/api' });
+// VITE_API_URL allows pointing to a separate backend in production.
+// In dev, the Vite proxy handles /api → localhost:3008, so leave it as '/api'.
+const API_BASE = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api`
+  : '/api';
+
+const api = axios.create({ baseURL: API_BASE });
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('pos_token');
@@ -40,11 +46,11 @@ api.interceptors.response.use(
 );
 
 // Public API — no auth, no X-Tenant needed
-const publicApi = axios.create({ baseURL: '/api/public' });
+const publicApi = axios.create({ baseURL: `${API_BASE}/public` });
 publicApi.interceptors.response.use((res) => res.data, (err) => Promise.reject(err.response?.data || err));
 
 // Super-admin API
-const adminAxios = axios.create({ baseURL: '/api/admin' });
+const adminAxios = axios.create({ baseURL: `${API_BASE}/admin` });
 adminAxios.interceptors.request.use((config) => {
   const token = localStorage.getItem('admin_token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
