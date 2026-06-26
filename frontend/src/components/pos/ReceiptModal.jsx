@@ -1,5 +1,6 @@
-import { useRef } from 'react';
-import { X, Printer, Download } from 'lucide-react';
+import { useRef, useState, useEffect } from 'react';
+import { X, Printer } from 'lucide-react';
+import { afipApi } from '../../services/api.js';
 
 const fmt = (n) => `$${Number(n || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
 
@@ -8,7 +9,25 @@ const PAYMENT_LABELS = {
   transferencia: 'Transferencia', cuenta_corriente: 'Cuenta corriente', mixto: 'Pago mixto',
 };
 
+const INVOICE_LABEL = { 1: 'Factura A', 6: 'Factura B', 11: 'Factura C' };
+
+function formatInvoiceNumber(puntoVenta, number) {
+  const pv = String(puntoVenta || 1).padStart(5, '0');
+  const n = String(number || 0).padStart(8, '0');
+  return `${pv}-${n}`;
+}
+
 export default function ReceiptModal({ sale, settings = {}, onClose }) {
+  const afip = sale?.afip || null;
+  const hasCae = !!(afip?.cae || sale?.cae);
+  const [qrDataUrl, setQrDataUrl] = useState(afip?.qr_data_url || null);
+
+  // Load QR for historical receipts (no afip.qr_data_url in create response)
+  useEffect(() => {
+    if (hasCae && !afip?.qr_data_url && sale?.id) {
+      afipApi.getSaleQR(sale.id).then(r => setQrDataUrl(r.qr_data_url)).catch(() => {});
+    }
+  }, [sale?.id]);
   const printRef = useRef();
 
   const handlePrint = () => {
@@ -45,16 +64,15 @@ export default function ReceiptModal({ sale, settings = {}, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md flex flex-col max-h-[90vh]">
+      <div className="rounded-xl shadow-2xl w-full max-w-md flex flex-col max-h-[90vh]" style={{ backgroundColor: 'var(--surface)' }}>
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="font-semibold text-gray-900">Recibo #{sale.ticket_number}</h2>
+        <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: 'var(--border)' }}>
+          <h2 className="font-semibold" style={{ color: 'var(--ink)' }}>Recibo #{sale.ticket_number}</h2>
           <div className="flex items-center gap-2">
-            <button onClick={handlePrint}
-              className="flex items-center gap-1.5 border rounded-lg px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50">
+            <button onClick={handlePrint} className="btn-secondary text-sm px-3 py-1.5">
               <Printer size={15} /> Imprimir
             </button>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <button onClick={onClose} style={{ color: 'var(--muted)' }} className="hover:opacity-70">
               <X size={20} />
             </button>
           </div>
@@ -129,6 +147,29 @@ export default function ReceiptModal({ sale, settings = {}, onClose }) {
               </tbody>
             </table>
             <div className="border-t border-dashed border-gray-400 my-2" />
+
+            {/* AFIP data */}
+            {hasCae && (() => {
+              const cae = afip?.cae || sale?.cae;
+              const caeVto = afip?.cae_vto || sale?.cae_vto;
+              const invoiceType = afip?.invoice_type || sale?.invoice_type;
+              const invoiceNumber = afip?.invoice_number || sale?.invoice_number;
+              const puntoVenta = afip?.punto_venta || 1;
+              const typeLabel = INVOICE_LABEL[invoiceType] || `Tipo ${invoiceType}`;
+              return (
+                <div className="space-y-1">
+                  <p className="font-bold text-center">{typeLabel} N° {formatInvoiceNumber(puntoVenta, invoiceNumber)}</p>
+                  <p><span className="font-semibold">CAE:</span> {cae}</p>
+                  <p><span className="font-semibold">Vto. CAE:</span> {caeVto ? new Date(caeVto + 'T00:00:00').toLocaleDateString('es-AR') : '—'}</p>
+                  {qrDataUrl && (
+                    <div className="flex justify-center pt-1">
+                      <img src={qrDataUrl} alt="QR AFIP" style={{ width: 90, height: 90 }} />
+                    </div>
+                  )}
+                  <div className="border-t border-dashed border-gray-400 my-2" />
+                </div>
+              );
+            })()}
 
             {/* Footer */}
             <p className="text-center">{footer}</p>

@@ -1,10 +1,26 @@
 import mysql from 'mysql2/promise';
+import dns from 'dns/promises';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 
 dotenv.config();
+
+// Fuerza IPv4 para evitar problemas de grants en MySQL cuando el host resuelve a IPv6
+async function resolveToIPv4(hostname) {
+  if (!hostname) return hostname;
+  // Ya es una IP o localhost — no resolver
+  if (/^[\d.]+$/.test(hostname) || hostname === 'localhost') return hostname;
+  try {
+    const addrs = await dns.resolve4(hostname);
+    if (addrs.length) {
+      console.log(`  ℹ  ${hostname} → ${addrs[0]} (IPv4 forzado)`);
+      return addrs[0];
+    }
+  } catch { /* no tiene registro A, usar nombre original */ }
+  return hostname;
+}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -56,42 +72,52 @@ async function runSql(connection, filePath) {
 }
 
 async function init() {
-  console.log(`\n🔧 Iniciando configuración de BD (${DB_NAME}) en ${process.env.DB_HOST}:${process.env.DB_PORT || 3306}…`);
+  const rawHost = process.env.DB_HOST;
+  const port    = parseInt(process.env.DB_PORT || '3306');
+  const user    = process.env.DB_USER;
+  const pass    = process.env.DB_PASSWORD;
+
+  console.log(`\n🔧 Iniciando configuración de BD "${DB_NAME}" en ${rawHost}:${port} (usuario: ${user})…`);
+
+  // Resolver hostname a IPv4 — evita problemas de grants cuando el host resuelve a IPv6
+  const host = await resolveToIPv4(rawHost);
+
+  const baseOpts = { host, port, user, password: pass, multipleStatements: false };
 
   // Paso 1: intentar crear la BD si no existe (best-effort — muchos hostings no lo permiten)
-  // Si la conexión sin DB falla o no tenemos permisos, simplemente continuamos al paso 2.
   try {
-    const rootConn = await mysql.createConnection({
-      host:     process.env.DB_HOST,
-      port:     parseInt(process.env.DB_PORT || '3306'),
-      user:     process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      multipleStatements: false,
-    });
+    const rootConn = await mysql.createConnection(baseOpts);
     try {
       await rootConn.query(
         `CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
       );
-      console.log(`  ✓ Base de datos "${DB_NAME}" lista`);
+      console.log(`  ✓ Base de datos "${DB_NAME}" creada/lista`);
     } catch {
       console.log(`  ⚠  Sin permisos para CREATE DATABASE — asumiendo que "${DB_NAME}" ya existe`);
     } finally {
       await rootConn.end().catch(() => {});
     }
   } catch (connErr) {
-    // El hosting requiere especificar BD para conectar — saltamos al paso 2 directamente
-    console.log(`  ⚠  Paso 1 omitido (${connErr.code || connErr.message}) — la BD debe existir ya`);
+    console.log(`  ⚠  Paso 1 omitido (${connErr.code || connErr.message}) — continuando`);
   }
 
-  // Paso 2: reconectar CON la base de datos especificada
-  const conn = await mysql.createConnection({
-    host:     process.env.DB_HOST,
-    port:     parseInt(process.env.DB_PORT || '3306'),
-    user:     process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: DB_NAME,
-    multipleStatements: false,
-  });
+  // Paso 2: conectar CON la base de datos y correr migraciones
+  // Intentamos primero sin SSL, luego con SSL si falla por acceso denegado
+  let conn;
+  try {
+    conn = await mysql.createConnection({ ...baseOpts, database: DB_NAME });
+  } catch (err) {
+    if (err.code === 'ER_ACCESS_DENIED_ERROR' || err.code === 'ER_ACCESS_DENIED_NO_PASSWORD_ERROR') {
+      console.log('  ⚠  Acceso denegado sin SSL, reintentando con SSL…');
+      conn = await mysql.createConnection({
+        ...baseOpts,
+        database: DB_NAME,
+        ssl: { rejectUnauthorized: false },
+      });
+    } else {
+      throw err;
+    }
+  }
 
   const migrations = [
     ['schema.sql',               'Tablas base'],

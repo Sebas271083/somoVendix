@@ -148,34 +148,53 @@ export default function CashFlow() {
         </button>
       </div>
 
-      {/* Daily stats */}
-      {dailySummary && (
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-green-50 border border-green-100 rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <TrendingUp size={16} className="text-green-600" />
-              <p className="text-sm font-medium text-green-600">Ingresos hoy</p>
+      {/* Stats: hoy + período */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+        {dailySummary && (<>
+          <div className="bg-green-50 border border-green-100 rounded-xl p-4 col-span-1">
+            <div className="flex items-center gap-1.5 mb-1">
+              <TrendingUp size={13} className="text-green-600" />
+              <p className="text-xs font-medium text-green-600">Ingresos hoy</p>
             </div>
-            <p className="text-2xl font-bold text-green-700">{fmt(dailySummary.total_income)}</p>
+            <p className="text-xl font-bold text-green-700">{fmt(dailySummary.total_income)}</p>
           </div>
-          <div className="bg-red-50 border border-red-100 rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <TrendingDown size={16} className="text-red-600" />
-              <p className="text-sm font-medium text-red-600">Egresos hoy</p>
+          <div className="bg-red-50 border border-red-100 rounded-xl p-4 col-span-1">
+            <div className="flex items-center gap-1.5 mb-1">
+              <TrendingDown size={13} className="text-red-600" />
+              <p className="text-xs font-medium text-red-600">Egresos hoy</p>
             </div>
-            <p className="text-2xl font-bold text-red-700">{fmt(dailySummary.total_expense)}</p>
+            <p className="text-xl font-bold text-red-700">{fmt(dailySummary.total_expense)}</p>
           </div>
-          <div className={`border rounded-xl p-4 ${parseFloat(dailySummary.balance) >= 0 ? 'bg-blue-50 border-blue-100' : 'bg-orange-50 border-orange-100'}`}>
-            <div className="flex items-center gap-2 mb-1">
-              <DollarSign size={16} className={parseFloat(dailySummary.balance) >= 0 ? 'text-blue-600' : 'text-orange-600'} />
-              <p className={`text-sm font-medium ${parseFloat(dailySummary.balance) >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>Balance hoy</p>
+          <div className={`border rounded-xl p-4 col-span-1 ${parseFloat(dailySummary.balance) >= 0 ? 'bg-blue-50 border-blue-100' : 'bg-orange-50 border-orange-100'}`}>
+            <div className="flex items-center gap-1.5 mb-1">
+              <DollarSign size={13} className={parseFloat(dailySummary.balance) >= 0 ? 'text-blue-600' : 'text-orange-600'} />
+              <p className={`text-xs font-medium ${parseFloat(dailySummary.balance) >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>Balance hoy</p>
             </div>
-            <p className={`text-2xl font-bold ${parseFloat(dailySummary.balance) >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>
+            <p className={`text-xl font-bold ${parseFloat(dailySummary.balance) >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>
               {fmt(dailySummary.balance)}
             </p>
           </div>
-        </div>
-      )}
+        </>)}
+        {chartData.length > 0 && (() => {
+          const pIncome = chartData.reduce((s, d) => s + d.income, 0);
+          const pExpense = chartData.reduce((s, d) => s + d.expense, 0);
+          const pBalance = pIncome - pExpense;
+          return (<>
+            <div className="bg-green-50 border border-green-100 rounded-xl p-4 col-span-1">
+              <p className="text-xs font-medium text-green-600 mb-1">Ingresos período</p>
+              <p className="text-xl font-bold text-green-700">{fmt(pIncome)}</p>
+            </div>
+            <div className="bg-red-50 border border-red-100 rounded-xl p-4 col-span-1">
+              <p className="text-xs font-medium text-red-600 mb-1">Egresos período</p>
+              <p className="text-xl font-bold text-red-700">{fmt(pExpense)}</p>
+            </div>
+            <div className={`border rounded-xl p-4 col-span-1 ${pBalance >= 0 ? 'bg-blue-50 border-blue-100' : 'bg-orange-50 border-orange-100'}`}>
+              <p className={`text-xs font-medium mb-1 ${pBalance >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>Balance período</p>
+              <p className={`text-xl font-bold ${pBalance >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>{fmt(pBalance)}</p>
+            </div>
+          </>);
+        })()}
+      </div>
 
       {/* Chart */}
       {chartData.length > 0 && (

@@ -21,6 +21,14 @@ import Receivables from './pages/Receivables.jsx';
 import Expenses from './pages/Expenses.jsx';
 import CashFlow from './pages/CashFlow.jsx';
 import Settings from './pages/Settings.jsx';
+import PurchaseOrders from './pages/PurchaseOrders.jsx';
+import Users from './pages/Users.jsx';
+import BillingResult from './pages/BillingResult.jsx';
+import Stocktaking from './pages/Stocktaking.jsx';
+import Campaigns from './pages/Campaigns.jsx';
+import Quotes from './pages/Quotes.jsx';
+import CreditNotes from './pages/CreditNotes.jsx';
+import Installments from './pages/Installments.jsx';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -44,6 +52,9 @@ function AppRoutes() {
       <Route path="/register" element={<Register />} />
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin" element={<AdminPanel />} />
+      <Route path="/billing/success" element={<BillingResult status="success" />} />
+      <Route path="/billing/failure" element={<BillingResult status="failure" />} />
+      <Route path="/billing/pending" element={<BillingResult status="pending" />} />
       <Route
         path="/*"
         element={
@@ -58,11 +69,20 @@ function AppRoutes() {
                   <Route path="/customers" element={<Customers />} />
                   <Route path="/receivables" element={<Receivables />} />
                   <Route path="/suppliers" element={<Suppliers />} />
+                  <Route path="/purchase-orders" element={<PurchaseOrders />} />
                   <Route path="/sales" element={<Sales />} />
                   <Route path="/cash-register" element={<CashRegister />} />
                   <Route path="/cash-flow" element={<CashFlow />} />
                   <Route path="/expenses" element={<Expenses />} />
                   <Route path="/reports" element={<Reports />} />
+                  <Route path="/stocktaking" element={<Stocktaking />} />
+                  <Route path="/campaigns" element={<Campaigns />} />
+                  <Route path="/quotes" element={<Quotes />} />
+                  <Route path="/credit-notes" element={<CreditNotes />} />
+                  <Route path="/installments" element={<Installments />} />
+                  <Route path="/users" element={
+                    <AdminRoute><Users /></AdminRoute>
+                  } />
                   <Route path="/settings" element={
                     <AdminRoute><Settings /></AdminRoute>
                   } />

@@ -25,7 +25,11 @@
       "Bash(mysql -u root -proot pos_papelera -e \"SELECT id, name, subdomain, plan_id, status FROM tenants; SELECT id, name, slug, max_products, max_users FROM plans; SELECT column_name FROM information_schema.columns WHERE table_name='users' AND table_schema='pos_papelera' AND column_name='tenant_id';\")",
       "Bash(npm run *)",
       "Bash(node -e \"const fs=require\\('fs'\\); const css=fs.readFileSync\\('dist/assets/index-CytqmMh3.css','utf8'\\); const matches=css.match\\(/\\\\.dark[^{]*/g\\)||[]; console.log\\('Dark selectors found:', matches.length\\); matches.slice\\(0,10\\).forEach\\(m=>console.log\\(m.trim\\(\\)\\)\\);\")",
-      "Bash(node -e \"const fs=require\\('fs'\\); const css=fs.readFileSync\\('dist/assets/index-CytqmMh3.css','utf8'\\); const matches=css.match\\(/\\\\.dark[^}]+\\\\}/g\\)||[]; console.log\\('Dark blocks found:', matches.length\\); matches.slice\\(0,15\\).forEach\\(m=>console.log\\(m.substring\\(0,120\\)\\)\\);\")"
+      "Bash(node -e \"const fs=require\\('fs'\\); const css=fs.readFileSync\\('dist/assets/index-CytqmMh3.css','utf8'\\); const matches=css.match\\(/\\\\.dark[^}]+\\\\}/g\\)||[]; console.log\\('Dark blocks found:', matches.length\\); matches.slice\\(0,15\\).forEach\\(m=>console.log\\(m.substring\\(0,120\\)\\)\\);\")",
+      "Bash(node -e \"const fs=require\\('fs'\\); const css=fs.readFileSync\\('dist/assets/index-CZFziO7k.css','utf8'\\); const m=css.match\\(/\\\\.dark [^{]+\\\\{[^}]+\\\\}/g\\)||[]; m.forEach\\(x=>console.log\\(x.substring\\(0,90\\)\\)\\);\")",
+      "Bash(node -e ' *)",
+      "Bash(node -e \"import\\('./package.json', {assert:{type:'json'}}\\).then\\(p => console.log\\(Object.keys\\(p.default.dependencies\\).join\\(', '\\)\\)\\)\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(', '.join\\(d.get\\('dependencies',{}\\).keys\\(\\)\\)\\)\")"
     ]
   }
 }

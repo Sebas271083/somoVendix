@@ -1,4 +1,5 @@
 import axios from 'axios';
+import toast from 'react-hot-toast';
 
 // Detect subdomain: prod = negocio.gestix.app → "negocio"; dev = from localStorage
 export const getSubdomain = () => {
@@ -27,6 +28,12 @@ api.interceptors.response.use(
       localStorage.removeItem('pos_user');
       localStorage.removeItem('pos_tenant');
       window.location.href = '/login';
+    }
+    if (err.response?.data?.upgrade_required) {
+      toast.error(err.response.data.error || 'Módulo no disponible en tu plan actual', {
+        duration: 5000,
+        icon: '🔒',
+      });
     }
     return Promise.reject(err.response?.data || err);
   }
@@ -69,6 +76,16 @@ export const productsApi = {
   adjustStock: (id, data) => api.patch(`/products/${id}/stock`, data),
   lowStock: () => api.get('/products/low-stock'),
   stockHistory: (id) => api.get(`/products/${id}/stock-history`),
+  priceHistory: (id) => api.get(`/products/${id}/price-history`),
+  importCSV: (products) => api.post('/products/import', { products }),
+  getVariants: (id) => api.get(`/products/${id}/variants`),
+  saveVariants: (id, data) => api.post(`/products/${id}/variants`, data),
+  adjustVariantStock: (id, variantId, data) => api.patch(`/products/${id}/variants/${variantId}/stock`, data),
+  uploadImage: (id, file) => {
+    const form = new FormData();
+    form.append('image', file);
+    return api.post(`/products/${id}/image`, form, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
 };
 
 export const categoriesApi = {
@@ -86,18 +103,51 @@ export const customersApi = {
   salesHistory: (id) => api.get(`/customers/${id}/sales`),
   paymentsHistory: (id) => api.get(`/customers/${id}/payments`),
   accountSummary: (id) => api.get(`/customers/${id}/account`),
+  metrics: (id) => api.get(`/customers/${id}/metrics`),
+  interactions: (id) => api.get(`/customers/${id}/interactions`),
+  createInteraction: (id, data) => api.post(`/customers/${id}/interactions`, data),
+  deleteInteraction: (id, intId) => api.delete(`/customers/${id}/interactions/${intId}`),
+  loyaltyHistory: (id) => api.get(`/customers/${id}/loyalty`),
+  loyaltyPreview: (id, points) => api.post(`/customers/${id}/loyalty/preview`, { points }),
+  loyaltyAdjust: (id, data) => api.patch(`/customers/${id}/loyalty/adjust`, data),
+  getPriceLists: () => api.get('/customers/price-lists'),
+  updatePriceList: (segment, discount_pct) => api.patch(`/customers/price-lists/${segment}`, { discount_pct }),
+  importCSV: (customers) => api.post('/customers/import', { customers }),
 };
 
 export const salesApi = {
   list: (params) => api.get('/sales', { params }),
   get: (id) => api.get(`/sales/${id}`),
+  findByTicket: (ticket_number) => api.get('/sales', { params: { ticket_number } }),
   create: (data) => api.post('/sales', data),
   cancel: (id) => api.patch(`/sales/${id}/cancel`),
   summary: (date) => api.get('/sales/summary', { params: { date } }),
 };
 
+export const returnsApi = {
+  list: (params) => api.get('/returns', { params }),
+  create: (data) => api.post('/returns', data),
+  bySale: (sale_id) => api.get(`/returns/sale/${sale_id}`),
+};
+
+export const quotesApi = {
+  list: (params) => api.get('/quotes', { params }),
+  get: (id) => api.get(`/quotes/${id}`),
+  create: (data) => api.post('/quotes', data),
+  update: (id, data) => api.put(`/quotes/${id}`, data),
+  delete: (id) => api.delete(`/quotes/${id}`),
+};
+
+export const installmentsApi = {
+  plans: (params) => api.get('/installments/plans', { params }),
+  getInstallments: (plan_id) => api.get(`/installments/plans/${plan_id}`),
+  markPaid: (id, data) => api.patch(`/installments/${id}/pay`, data),
+};
+
 export const cashRegisterApi = {
   current: () => api.get('/cash-register/current'),
+  allOpen: () => api.get('/cash-register/all-open'),
+  history: () => api.get('/cash-register/history'),
   open: (data) => api.post('/cash-register/open', data),
   close: (id, data) => api.post(`/cash-register/${id}/close`, data),
   addMovement: (data) => api.post('/cash-register/movement', data),
@@ -134,6 +184,13 @@ export const expensesApi = {
   create: (data) => api.post('/expenses', data),
   update: (id, data) => api.put(`/expenses/${id}`, data),
   markPaid: (id) => api.patch(`/expenses/${id}/pay`),
+  uploadReceipt: (id, file) => {
+    const form = new FormData();
+    form.append('receipt', file);
+    return api.post(`/expenses/${id}/upload-receipt`, form, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
+  approve: (id) => api.patch(`/expenses/${id}/approve`),
+  reject: (id, notes) => api.patch(`/expenses/${id}/reject`, { notes }),
   delete: (id) => api.delete(`/expenses/${id}`),
 };
 
@@ -155,11 +212,62 @@ export const reportsApi = {
   topProducts: (params) => api.get('/reports/products/top', { params }),
   topCustomers: (params) => api.get('/reports/customers/top', { params }),
   inventoryValue: () => api.get('/reports/inventory/value'),
+  returnsSummary: (params) => api.get('/reports/returns/summary', { params }),
+  incomeStatement: (params) => api.get('/reports/income-statement', { params }),
+  comparison: (params) => api.get('/reports/comparison', { params }),
+  projection: () => api.get('/reports/projection'),
+};
+
+export const purchaseOrdersApi = {
+  list: (params) => api.get('/purchase-orders', { params }),
+  get: (id) => api.get(`/purchase-orders/${id}`),
+  create: (data) => api.post('/purchase-orders', data),
+  receive: (id) => api.patch(`/purchase-orders/${id}/receive`),
+  cancel: (id) => api.patch(`/purchase-orders/${id}/cancel`),
 };
 
 export const settingsApi = {
   getAll: () => api.get('/settings'),
   update: (data) => api.put('/settings', data),
+};
+
+export const billingApi = {
+  plans: () => api.get('/billing/plans'),
+  checkout: (plan_id) => api.post('/billing/checkout', { plan_id }),
+  status: () => api.get('/billing/status'),
+};
+
+export const locationsApi = {
+  list: () => api.get('/locations'),
+  create: (data) => api.post('/locations', data),
+  update: (id, data) => api.put(`/locations/${id}`, data),
+  getStock: (id) => api.get(`/locations/${id}/stock`),
+  transfer: (id, data) => api.post(`/locations/${id}/transfer`, data),
+};
+
+export const stocktakeApi = {
+  list: () => api.get('/stocktake'),
+  get: (id) => api.get(`/stocktake/${id}`),
+  create: (data) => api.post('/stocktake', data),
+  updateItem: (sessionId, itemId, counted_qty) => api.patch(`/stocktake/${sessionId}/items/${itemId}`, { counted_qty }),
+  close: (id) => api.post(`/stocktake/${id}/close`),
+};
+
+export const campaignsApi = {
+  list: () => api.get('/campaigns'),
+  get: (id) => api.get(`/campaigns/${id}`),
+  create: (data) => api.post('/campaigns', data),
+  update: (id, data) => api.put(`/campaigns/${id}`, data),
+  delete: (id) => api.delete(`/campaigns/${id}`),
+  send: (id) => api.post(`/campaigns/${id}/send`),
+  whatsappLinks: (id) => api.get(`/campaigns/${id}/whatsapp-links`),
+};
+
+export const afipApi = {
+  getSettings: () => api.get('/afip/settings'),
+  saveSettings: (data) => api.put('/afip/settings', data),
+  testConnection: () => api.post('/afip/test'),
+  getSaleQR: (saleId) => api.get(`/afip/sale/${saleId}/qr`),
 };
 
 export const publicRegistryApi = {
