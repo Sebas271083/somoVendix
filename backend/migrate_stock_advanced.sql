@@ -78,15 +78,16 @@ SELECT id, 'stock_valuation_method', 'weighted_avg' FROM tenants;
 INSERT IGNORE INTO locations (tenant_id, name, is_default)
 SELECT id, 'Principal', 1 FROM tenants;
 
--- 7. Inicializar location_stock desde products.stock (solo productos sin variantes)
+-- 7. Inicializar location_stock desde products.stock
+-- has_variants se agrega en migrate_variants.sql (posterior) — filtramos solo con stock > 0
 INSERT IGNORE INTO location_stock (location_id, product_id, variant_id, quantity)
 SELECT l.id, p.id, 0, p.stock
 FROM products p
 JOIN locations l ON l.tenant_id = p.tenant_id AND l.is_default = 1
-WHERE (p.has_variants = 0 OR p.has_variants IS NULL);
+WHERE p.stock > 0;
 
--- 8. Lotes iniciales para FIFO (productos sin variantes con stock)
+-- 8. Lotes iniciales para FIFO
 INSERT IGNORE INTO stock_lots (tenant_id, product_id, quantity_initial, quantity_remaining, unit_cost)
 SELECT p.tenant_id, p.id, p.stock, p.stock, COALESCE(p.cost, 0)
 FROM products p
-WHERE p.stock > 0 AND p.active = 1 AND (p.has_variants = 0 OR p.has_variants IS NULL);
+WHERE p.stock > 0 AND p.active = 1;
