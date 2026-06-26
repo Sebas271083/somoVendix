@@ -58,6 +58,41 @@ export const adminController = {
     } catch (err) { next(err); }
   },
 
+  async createTenant(req, res, next) {
+    try {
+      const { name, subdomain, email, adminName, adminPassword, planSlug } = req.body;
+      if (!name || !subdomain || !email || !adminName || !adminPassword) {
+        return res.status(400).json({ error: 'Todos los campos son requeridos' });
+      }
+      const exists = await TenantModel.subdomainExists(subdomain);
+      if (exists) return res.status(409).json({ error: 'El subdominio ya está en uso' });
+      const id = await TenantModel.create({ name, subdomain, email, adminName, adminPassword, planSlug });
+      res.status(201).json({ id, message: 'Cliente creado exitosamente' });
+    } catch (err) { next(err); }
+  },
+
+  async updateFeatures(req, res, next) {
+    try {
+      const tenant = await TenantModel.findById(req.params.id);
+      if (!tenant) return res.status(404).json({ error: 'Tenant no encontrado' });
+      const { features_override } = req.body;
+      await TenantModel.updateFeatures(req.params.id, features_override);
+      res.json({ message: 'Módulos actualizados' });
+    } catch (err) { next(err); }
+  },
+
+  async extendTrial(req, res, next) {
+    try {
+      const { days } = req.body;
+      const d = parseInt(days, 10);
+      if (!d || d < 1 || d > 365) {
+        return res.status(400).json({ error: 'Días inválidos (1-365)' });
+      }
+      await TenantModel.extendTrial(req.params.id, d);
+      res.json({ message: `Trial extendido ${d} días` });
+    } catch (err) { next(err); }
+  },
+
   async getPlans(req, res, next) {
     try {
       res.json(await PlanModel.findAll());

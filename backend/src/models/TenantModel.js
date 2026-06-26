@@ -1,6 +1,12 @@
 import { query, getConnection } from '../config/database.js';
 import bcrypt from 'bcryptjs';
 
+const safeParse = (v) => {
+  if (!v) return {};
+  if (typeof v === 'object') return v;
+  try { return JSON.parse(v); } catch { return {}; }
+};
+
 export const TenantModel = {
   async findBySubdomain(subdomain) {
     const rows = await query(
@@ -15,32 +21,36 @@ export const TenantModel = {
     );
     if (!rows[0]) return null;
     const t = rows[0];
-    try { t.features = typeof t.features === 'string' ? JSON.parse(t.features) : t.features; }
-    catch { t.features = {}; }
+    // t.features = p.features (plan defaults); t.features_override = tenant-level overrides
+    const planFeatures = safeParse(t.features);
+    const override = safeParse(t.features_override);
+    t.features = { ...planFeatures, ...override };
     return t;
   },
 
   async findById(id) {
     const rows = await query(
       `SELECT t.*, p.name AS plan_name, p.slug AS plan_slug,
-              p.max_products, p.max_users, p.max_sales_per_month, p.features
+              p.max_products, p.max_users, p.max_sales_per_month, p.features AS plan_features_raw
        FROM tenants t JOIN plans p ON t.plan_id = p.id WHERE t.id = ?`,
       [id]
     );
     if (!rows[0]) return null;
     const t = rows[0];
-    try { t.features = typeof t.features === 'string' ? JSON.parse(t.features) : t.features; }
-    catch { t.features = {}; }
+    const planFeatures = safeParse(t.plan_features_raw);
+    const override = safeParse(t.features_override);
+    t.plan_features = planFeatures;
+    t.features = { ...planFeatures, ...override };
+    delete t.plan_features_raw;
     return t;
   },
 
-  async create({ name, subdomain, email, adminName, adminPassword }) {
+  async create({ name, subdomain, email, adminName, adminPassword, planSlug = 'pro' }) {
     const conn = await getConnection();
     try {
       await conn.beginTransaction();
 
-      // Obtener plan Pro por defecto (trial 14 días)
-      const [[plan]] = await conn.execute("SELECT id FROM plans WHERE slug = 'pro'");
+      const [[plan]] = await conn.execute('SELECT id FROM plans WHERE slug = ?', [planSlug]);
       const trialEnd = new Date(Date.now() + 14 * 86400000);
 
       const [tenantRes] = await conn.execute(
@@ -56,7 +66,6 @@ export const TenantModel = {
         [tenant_id, plan.id, trialEnd]
       );
 
-      // Crear usuario admin del tenant
       const hash = await bcrypt.hash(adminPassword, 10);
       await conn.execute(
         `INSERT INTO users (tenant_id, name, email, password, role)
@@ -64,7 +73,6 @@ export const TenantModel = {
         [tenant_id, adminName, email, hash]
       );
 
-      // Settings iniciales del tenant
       const defaultSettings = [
         ['business_name', name],
         ['currency', 'ARS'], ['currency_symbol', '$'],
@@ -79,13 +87,11 @@ export const TenantModel = {
         );
       }
 
-      // Categoría inicial
       await conn.execute(
         `INSERT INTO categories (tenant_id, name, slug, color) VALUES (?, 'General', 'general', '#6366f1')`,
         [tenant_id]
       );
 
-      // Cliente "Consumidor Final"
       await conn.execute(
         `INSERT INTO customers (tenant_id, name, document_type, document_number)
          VALUES (?, 'Consumidor Final', 'DNI', '00000000')`,
@@ -107,12 +113,14 @@ export const TenantModel = {
     return rows.length > 0;
   },
 
-  // Métricas para super-admin
   async getAll() {
     return query(
-      `SELECT t.*, p.name AS plan_name, p.slug AS plan_slug,
+      `SELECT t.id, t.name, t.subdomain, t.email, t.status, t.trial_ends_at,
+              t.created_at, t.notes,
+              p.name AS plan_name, p.slug AS plan_slug,
               (SELECT COUNT(*) FROM users u WHERE u.tenant_id = t.id) AS users_count,
-              (SELECT COUNT(*) FROM sales s WHERE s.tenant_id = t.id AND s.status='completed') AS total_sales
+              (SELECT COUNT(*) FROM sales s WHERE s.tenant_id = t.id AND s.status='completed') AS total_sales,
+              (SELECT MAX(s.created_at) FROM sales s WHERE s.tenant_id = t.id AND s.status='completed') AS last_sale_at
        FROM tenants t JOIN plans p ON t.plan_id = p.id
        ORDER BY t.created_at DESC`
     );
@@ -137,14 +145,37 @@ export const TenantModel = {
   },
 
   async update(id, fields) {
-    const allowed = ['plan_id', 'status', 'name'];
+    const allowed = ['plan_id', 'status', 'name', 'email', 'trial_ends_at', 'notes'];
     const keys = Object.keys(fields).filter(k => allowed.includes(k));
     if (!keys.length) return;
     const sql = `UPDATE tenants SET ${keys.map(k => `${k}=?`).join(', ')} WHERE id=?`;
     await query(sql, [...keys.map(k => fields[k]), id]);
   },
 
-  // Verificar si el trial expiró → bajar a plan gratis
+  async updateFeatures(id, features_override) {
+    await query(
+      'UPDATE tenants SET features_override = ? WHERE id = ?',
+      [features_override ? JSON.stringify(features_override) : null, id]
+    );
+  },
+
+  async extendTrial(id, days) {
+    await query(
+      `UPDATE tenants
+       SET trial_ends_at = DATE_ADD(GREATEST(COALESCE(trial_ends_at, NOW()), NOW()), INTERVAL ? DAY),
+           status = 'trial'
+       WHERE id = ?`,
+      [parseInt(days, 10), id]
+    );
+    await query(
+      `UPDATE subscriptions
+       SET trial_ends_at = (SELECT trial_ends_at FROM tenants WHERE id = ?),
+           status = 'trialing'
+       WHERE tenant_id = ?`,
+      [id, id]
+    );
+  },
+
   async checkTrials() {
     await query(
       `UPDATE tenants t

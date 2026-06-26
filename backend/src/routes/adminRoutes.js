@@ -29,8 +29,11 @@ router.post('/login', adminController.login);
 // Protected
 router.use(authenticateAdmin);
 router.get('/tenants', adminController.getTenants);
+router.post('/tenants', adminController.createTenant);
 router.get('/tenants/:id', adminController.getTenant);
 router.put('/tenants/:id', adminController.updateTenant);
+router.put('/tenants/:id/features', adminController.updateFeatures);
+router.post('/tenants/:id/extend-trial', adminController.extendTrial);
 router.get('/stats', adminController.getStats);
 router.get('/plans', adminController.getPlans);
 router.post('/check-trials', adminController.checkTrials);

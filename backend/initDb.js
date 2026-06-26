@@ -8,7 +8,8 @@ dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const DB_NAME = process.env.DB_NAME || 'pos_papelera';
+// Varios hostings usan nombres distintos para la variable del nombre de BD
+const DB_NAME = process.env.DB_NAME || process.env.MYSQL_DATABASE || process.env.MYSQLDATABASE || 'pos_papelera';
 
 async function runSql(connection, filePath) {
   const raw = fs.readFileSync(filePath, 'utf8');
@@ -57,29 +58,29 @@ async function runSql(connection, filePath) {
 async function init() {
   console.log(`\n🔧 Iniciando configuración de BD (${DB_NAME}) en ${process.env.DB_HOST}:${process.env.DB_PORT || 3306}…`);
 
-  // Paso 1: conectar SIN base de datos para crearla si no existe
-  const rootConn = await mysql.createConnection({
-    host:     process.env.DB_HOST,
-    port:     parseInt(process.env.DB_PORT || '3306'),
-    user:     process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    multipleStatements: false,
-  });
-
+  // Paso 1: intentar crear la BD si no existe (best-effort — muchos hostings no lo permiten)
+  // Si la conexión sin DB falla o no tenemos permisos, simplemente continuamos al paso 2.
   try {
-    await rootConn.query(
-      `CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
-    );
-    console.log(`  ✓ Base de datos "${DB_NAME}" lista`);
-  } catch (err) {
-    // Algunos hostings no permiten CREATE DATABASE — si ya existe, continuamos
-    if (err.code === 'ER_DBACCESS_DENIED_ERROR' || err.code === 'ER_ACCESS_DENIED_ERROR') {
+    const rootConn = await mysql.createConnection({
+      host:     process.env.DB_HOST,
+      port:     parseInt(process.env.DB_PORT || '3306'),
+      user:     process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      multipleStatements: false,
+    });
+    try {
+      await rootConn.query(
+        `CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
+      );
+      console.log(`  ✓ Base de datos "${DB_NAME}" lista`);
+    } catch {
       console.log(`  ⚠  Sin permisos para CREATE DATABASE — asumiendo que "${DB_NAME}" ya existe`);
-    } else {
-      throw err;
+    } finally {
+      await rootConn.end().catch(() => {});
     }
-  } finally {
-    await rootConn.end();
+  } catch (connErr) {
+    // El hosting requiere especificar BD para conectar — saltamos al paso 2 directamente
+    console.log(`  ⚠  Paso 1 omitido (${connErr.code || connErr.message}) — la BD debe existir ya`);
   }
 
   // Paso 2: reconectar CON la base de datos especificada
@@ -105,6 +106,7 @@ async function init() {
     ['migrate_v6.sql',           'Caja mejorada'],
     ['migrate_v7.sql',           'Gastos avanzados'],
     ['migrate_variants.sql',     'Variantes de producto'],
+    ['migrate_v8.sql',           'Feature overrides por tenant'],
   ];
 
   try {
