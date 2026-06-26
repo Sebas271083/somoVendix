@@ -24,14 +24,32 @@ async function resolveToIPv4(hostname) {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Varios hostings usan nombres distintos para la variable del nombre de BD
-const DB_NAME = process.env.DB_NAME || process.env.MYSQL_DATABASE || process.env.MYSQLDATABASE || 'pos_papelera';
+function parseDbUrl(raw) {
+  try {
+    const u = new URL(raw);
+    return {
+      host:     u.hostname,
+      port:     parseInt(u.port || '3306'),
+      user:     decodeURIComponent(u.username),
+      password: decodeURIComponent(u.password),
+      database: u.pathname.replace(/^\//, ''),
+    };
+  } catch { return null; }
+}
+
+const urlCreds = process.env.DATABASE_URL ? parseDbUrl(process.env.DATABASE_URL) : null;
+
+const DB_NAME = urlCreds?.database
+  || process.env.DB_NAME
+  || process.env.MYSQL_DATABASE
+  || process.env.MYSQLDATABASE
+  || 'pos_papelera';
 
 async function runSql(connection, filePath) {
   const raw = fs.readFileSync(filePath, 'utf8');
 
-  // Strip single-line comments and filter out CREATE DATABASE / USE statements
-  // because we handle those ourselves using DB_NAME env var
+  // Strip comments, CREATE DATABASE / USE, and normalize ALTER TABLE syntax
+  // for MySQL 5.7 compatibility (IF NOT EXISTS inside ALTER TABLE is 8.0+ / MariaDB only)
   const lines = raw
     .split('\n')
     .filter(line => {
@@ -40,7 +58,16 @@ async function runSql(connection, filePath) {
       if (/^CREATE\s+DATABASE/i.test(t)) return false;
       if (/^USE\s+/i.test(t)) return false;
       return true;
-    });
+    })
+    .map(line =>
+      line
+        .replace(/\bADD\s+COLUMN\s+IF\s+NOT\s+EXISTS\s+/gi, 'ADD COLUMN ')
+        .replace(/\bADD\s+INDEX\s+IF\s+NOT\s+EXISTS\s+/gi, 'ADD INDEX ')
+        .replace(/\bADD\s+UNIQUE\s+INDEX\s+IF\s+NOT\s+EXISTS\s+/gi, 'ADD UNIQUE INDEX ')
+        .replace(/\bADD\s+KEY\s+IF\s+NOT\s+EXISTS\s+/gi, 'ADD KEY ')
+        .replace(/\bDROP\s+INDEX\s+IF\s+EXISTS\s+/gi, 'DROP INDEX ')
+        .replace(/\bDROP\s+COLUMN\s+IF\s+EXISTS\s+/gi, 'DROP COLUMN ')
+    );
 
   const statements = lines
     .join('\n')
@@ -49,12 +76,13 @@ async function runSql(connection, filePath) {
     .filter(s => s.length > 0);
 
   const ignorable = new Set([
-    'ER_DUP_FIELDNAME',
-    'ER_DUP_KEYNAME',
-    'ER_TABLE_EXISTS_ERROR',
-    'ER_DUP_ENTRY',
-    'ER_MULTIPLE_PRI_KEY',
-    'ER_CANT_DROP_FIELD_OR_KEY',
+    'ER_DUP_FIELDNAME',         // column already exists
+    'ER_DUP_KEYNAME',           // index already exists
+    'ER_TABLE_EXISTS_ERROR',    // table already exists
+    'ER_DUP_ENTRY',             // duplicate seed data
+    'ER_MULTIPLE_PRI_KEY',      // PK already defined
+    'ER_CANT_DROP_FIELD_OR_KEY',// column/key to drop doesn't exist
+    'ER_COLUMN_EXISTS',         // synonym on some MySQL builds
   ]);
 
   for (const stmt of statements) {
@@ -72,17 +100,29 @@ async function runSql(connection, filePath) {
 }
 
 async function init() {
-  const rawHost = process.env.DB_HOST;
-  const port    = parseInt(process.env.DB_PORT || '3306');
-  const user    = process.env.DB_USER;
-  const pass    = process.env.DB_PASSWORD;
+  let host, port, user, pass;
 
-  console.log(`\n🔧 Iniciando configuración de BD "${DB_NAME}" en ${rawHost}:${port} (usuario: ${user})…`);
+  if (urlCreds) {
+    host = urlCreds.host;
+    port = urlCreds.port;
+    user = urlCreds.user;
+    pass = urlCreds.password;
+    console.log(`\n🔧 Iniciando configuración de BD "${DB_NAME}" vía DATABASE_URL (${user}@${host}:${port})…`);
+  } else {
+    const rawHost = process.env.DB_HOST;
+    port = parseInt(process.env.DB_PORT || '3306');
+    user = process.env.DB_USER;
+    pass = process.env.DB_PASSWORD;
+    console.log(`\n🔧 Iniciando configuración de BD "${DB_NAME}" en ${rawHost}:${port} (usuario: ${user})…`);
+    // Resolver hostname a IPv4 — evita problemas de grants cuando el host resuelve a IPv6
+    host = await resolveToIPv4(rawHost);
+  }
 
-  // Resolver hostname a IPv4 — evita problemas de grants cuando el host resuelve a IPv6
-  const host = await resolveToIPv4(rawHost);
-
-  const baseOpts = { host, port, user, password: pass, multipleStatements: false };
+  const baseOpts = {
+    host, port, user, password: pass,
+    multipleStatements: false,
+    ...(urlCreds ? { ssl: { rejectUnauthorized: false } } : {}),
+  };
 
   // Paso 1: intentar crear la BD si no existe (best-effort — muchos hostings no lo permiten)
   try {
