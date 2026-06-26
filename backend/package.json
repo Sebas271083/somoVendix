@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
-    "db:init": "node initDb.js"
+    "db:init": "node initDb.js",
+    "build": "cd ../frontend && npm install && npm run build"
   },
   "dependencies": {
     "@afipsdk/afip.js": "^1.2.3",

@@ -42,15 +42,23 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const extraOrigins = (process.env.ALLOWED_ORIGINS || '')
+  .split(',').map(s => s.trim()).filter(Boolean);
+
 app.use(cors({
   origin: (origin, callback) => {
-    const allowed = [
+    const localOrigins = [
       'http://localhost:5173',
       'http://localhost:5174',
       'http://localhost:5175',
       'http://localhost:5200',
     ];
-    if (!origin || allowed.includes(origin) || /\.gestix\.app$/.test(origin)) {
+    if (
+      !origin ||
+      localOrigins.includes(origin) ||
+      extraOrigins.includes(origin) ||
+      /\.gestix\.app$/.test(origin)
+    ) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -100,6 +108,16 @@ app.use('/api/installments', installmentRoutes);
 app.use('/api/afip', afipRoutes);
 
 app.use(errorHandler);
+
+// En producción, servir el build del frontend desde frontend/dist/
+// Esto hace que /api/* vaya al backend y todo lo demás devuelva el index.html
+if (process.env.NODE_ENV === 'production') {
+  const distPath = path.join(__dirname, '../../frontend/dist');
+  app.use(express.static(distPath));
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+}
 
 // Inicializar/migrar BD antes de aceptar tráfico
 initDb()
