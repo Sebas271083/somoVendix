@@ -1,13 +1,24 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-// Detect subdomain: prod = negocio.gestix.app → "negocio"; dev = from localStorage
+// Detect subdomain for multi-tenant routing.
+// VITE_TENANT env var overrides everything (use for custom domains like somosvendix.com.ar).
 export const getSubdomain = () => {
+  if (import.meta.env.VITE_TENANT) return import.meta.env.VITE_TENANT;
+
   const host = window.location.hostname;
-  const parts = host.split('.');
-  if (parts.length >= 3 && !host.includes('localhost')) {
-    return parts[0];
+  if (host.includes('localhost')) {
+    return localStorage.getItem('gestix_subdomain') || 'demo';
   }
+
+  const parts = host.split('.');
+  // Country-code TLDs (ar, uk, br, au…) are 2 chars — need 4+ parts for a real subdomain.
+  // Generic TLDs (com, app, net…) are 3+ chars — need 3+ parts.
+  const tld = parts[parts.length - 1];
+  const minParts = tld.length <= 2 ? 4 : 3;
+
+  if (parts.length >= minParts) return parts[0];
+
   return localStorage.getItem('gestix_subdomain') || 'demo';
 };
 

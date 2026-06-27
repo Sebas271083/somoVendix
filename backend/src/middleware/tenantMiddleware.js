@@ -9,9 +9,12 @@ export const tenantMiddleware = async (req, res, next) => {
       subdomain = req.headers['x-tenant'];
     } else {
       // Prod: extract subdomain from host (negocio.gestix.app → negocio)
-      const host = req.headers.host || '';
+      // Country-code TLDs like .com.ar need 5+ parts; generic TLDs need 4+.
+      const host = (req.headers.host || '').split(':')[0]; // strip port
       const parts = host.split('.');
-      if (parts.length >= 3) {
+      const tld = parts[parts.length - 1];
+      const minParts = tld.length <= 2 ? 5 : 4; // e.g. sub.domain.com.ar = 5, sub.domain.com = 4
+      if (parts.length >= minParts) {
         subdomain = parts[0];
       }
     }
