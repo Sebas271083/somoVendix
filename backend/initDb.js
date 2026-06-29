@@ -173,6 +173,7 @@ async function init() {
     ['migrate_v7.sql',           'Gastos avanzados'],
     ['migrate_variants.sql',     'Variantes de producto'],
     ['migrate_v8.sql',           'Feature overrides por tenant'],
+    ['migrate_v9.sql',           'Órdenes de compra'],
   ];
 
   try {
