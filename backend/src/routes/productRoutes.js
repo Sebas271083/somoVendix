@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import multer from 'multer';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { productController } from '../controllers/productController.js';
 import { authenticate, requireAdmin } from '../middleware/authMiddleware.js';
@@ -8,6 +9,7 @@ import { checkProductLimit } from '../middleware/planLimitsMiddleware.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const UPLOADS_DIR = path.join(__dirname, '../public/uploads/products');
+fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, UPLOADS_DIR),
