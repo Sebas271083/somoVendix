@@ -1,20 +1,26 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { superAdminApi } from '../../services/api.js';
+import { useTheme } from '../../context/ThemeContext.jsx';
 import toast from 'react-hot-toast';
 import {
   Users, LogOut, RefreshCw, Plus, X, ChevronRight,
   Mail, Calendar, ShoppingBag,
   Shield, Clock, AlertTriangle, CheckCircle2, Ban, RotateCcw,
-  ToggleLeft, ToggleRight, Search,
+  ToggleLeft, ToggleRight, Search, Sun, Moon,
 } from 'lucide-react';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
+// Usa la misma base URL que api.js para que en producción apunte al backend correcto
+const ADMIN_API_BASE = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api/admin`
+  : '/api/admin';
+
 const adminFetch = async (path, options = {}) => {
   const token = localStorage.getItem('admin_token');
   const { method = 'GET', body } = options;
-  const res = await fetch(`/api/admin${path}`, {
+  const res = await fetch(`${ADMIN_API_BASE}${path}`, {
     method,
     headers: {
       'Content-Type': 'application/json',
@@ -79,8 +85,8 @@ function PlanBadge({ slug, name }) {
 
 function StatCard({ label, value, color }) {
   return (
-    <div className="bg-gray-900 rounded-xl p-4 border border-gray-800">
-      <p className="text-gray-400 text-xs mb-1">{label}</p>
+    <div className="rounded-xl p-4 border" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
+      <p className="text-xs mb-1" style={{ color: 'var(--muted)' }}>{label}</p>
       <p className="text-2xl font-bold" style={{ color }}>{value ?? 0}</p>
     </div>
   );
@@ -122,59 +128,54 @@ function CreateModal({ plans, onClose, onCreated }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-900 rounded-2xl w-full max-w-lg border border-gray-700 shadow-2xl">
-        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-800">
-          <h2 className="font-semibold text-white">Nuevo cliente</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+      <div className="rounded-2xl w-full max-w-lg shadow-2xl border"
+           style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
+        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b"
+             style={{ borderColor: 'var(--border)' }}>
+          <h2 className="font-semibold" style={{ color: 'var(--ink)' }}>Nuevo cliente</h2>
+          <button onClick={onClose} className="transition-colors" style={{ color: 'var(--muted)' }}>
             <X size={18} />
           </button>
         </div>
         <form onSubmit={submit} className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
-              <label className="text-xs text-gray-400 mb-1 block">Nombre del negocio *</label>
-              <input value={form.name} onChange={set('name')} required
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-indigo-500 outline-none" />
+              <label className="text-xs font-medium mb-1 block" style={{ color: 'var(--muted)' }}>Nombre del negocio *</label>
+              <input value={form.name} onChange={set('name')} required className="input" />
             </div>
             <div>
-              <label className="text-xs text-gray-400 mb-1 block">Subdominio *</label>
+              <label className="text-xs font-medium mb-1 block" style={{ color: 'var(--muted)' }}>Subdominio *</label>
               <div className="flex items-center gap-1">
                 <input value={form.subdomain} onChange={set('subdomain')} required pattern="[a-z0-9-]+"
-                  className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm font-mono focus:border-indigo-500 outline-none" />
-                <span className="text-gray-500 text-xs whitespace-nowrap">.gestix.app</span>
+                  className="input flex-1 font-mono" />
+                <span className="text-xs whitespace-nowrap" style={{ color: 'var(--muted)' }}>.gestix.app</span>
               </div>
             </div>
             <div>
-              <label className="text-xs text-gray-400 mb-1 block">Plan inicial</label>
-              <select value={form.planSlug} onChange={set('planSlug')}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-indigo-500 outline-none">
+              <label className="text-xs font-medium mb-1 block" style={{ color: 'var(--muted)' }}>Plan inicial</label>
+              <select value={form.planSlug} onChange={set('planSlug')} className="input">
                 {plans.map(p => <option key={p.id} value={p.slug}>{p.name}</option>)}
               </select>
             </div>
             <div className="col-span-2">
-              <label className="text-xs text-gray-400 mb-1 block">Email del negocio *</label>
-              <input type="email" value={form.email} onChange={set('email')} required
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-indigo-500 outline-none" />
+              <label className="text-xs font-medium mb-1 block" style={{ color: 'var(--muted)' }}>Email del negocio *</label>
+              <input type="email" value={form.email} onChange={set('email')} required className="input" />
             </div>
             <div>
-              <label className="text-xs text-gray-400 mb-1 block">Nombre del admin *</label>
-              <input value={form.adminName} onChange={set('adminName')} required
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-indigo-500 outline-none" />
+              <label className="text-xs font-medium mb-1 block" style={{ color: 'var(--muted)' }}>Nombre del admin *</label>
+              <input value={form.adminName} onChange={set('adminName')} required className="input" />
             </div>
             <div>
-              <label className="text-xs text-gray-400 mb-1 block">Contraseña inicial *</label>
-              <input type="password" value={form.adminPassword} onChange={set('adminPassword')} required minLength={6}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-indigo-500 outline-none" />
+              <label className="text-xs font-medium mb-1 block" style={{ color: 'var(--muted)' }}>Contraseña inicial *</label>
+              <input type="password" value={form.adminPassword} onChange={set('adminPassword')} required minLength={6} className="input" />
             </div>
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="submit" disabled={saving}
-              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-lg font-semibold text-sm transition-colors disabled:opacity-50">
+            <button type="submit" disabled={saving} className="btn-primary flex-1 justify-center py-2.5 disabled:opacity-50">
               {saving ? 'Creando...' : 'Crear cliente'}
             </button>
-            <button type="button" onClick={onClose}
-              className="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 py-2.5 rounded-lg text-sm transition-colors">
+            <button type="button" onClick={onClose} className="btn-secondary flex-1 justify-center py-2.5">
               Cancelar
             </button>
           </div>
@@ -276,45 +277,46 @@ function DetailPanel({ tenant, plans, onClose, onRefresh }) {
   );
 
   return (
-    <div className="flex flex-col h-full bg-gray-950 border-l border-gray-800 w-full">
+    <div className="flex flex-col h-full w-full border-l" style={{ backgroundColor: 'var(--bg)', borderColor: 'var(--border)' }}>
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-800">
+      <div className="flex items-center justify-between px-5 py-4 border-b flex-shrink-0" style={{ borderColor: 'var(--border)' }}>
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-10 h-10 rounded-xl bg-indigo-600/20 flex items-center justify-center text-indigo-400 font-bold text-sm flex-shrink-0">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-indigo-600 font-bold text-sm flex-shrink-0"
+               style={{ backgroundColor: 'rgba(99,102,241,.12)' }}>
             {initials(tenant.name)}
           </div>
           <div className="min-w-0">
-            <p className="font-semibold text-white truncate">{tenant.name}</p>
-            <p className="text-xs text-gray-500 font-mono">{tenant.subdomain}.gestix.app</p>
+            <p className="font-semibold truncate" style={{ color: 'var(--ink)' }}>{tenant.name}</p>
+            <p className="text-xs font-mono" style={{ color: 'var(--muted)' }}>{tenant.subdomain}.gestix.app</p>
           </div>
         </div>
-        <button onClick={onClose} className="text-gray-600 hover:text-gray-300 transition-colors flex-shrink-0 ml-2">
+        <button onClick={onClose} className="transition-colors flex-shrink-0 ml-2" style={{ color: 'var(--muted)' }}>
           <X size={18} />
         </button>
       </div>
 
       <div className="flex-1 overflow-y-auto">
         {!detail ? (
-          <div className="flex items-center justify-center h-32 text-gray-600 text-sm">Cargando...</div>
+          <div className="flex items-center justify-center h-32 text-sm" style={{ color: 'var(--muted)' }}>Cargando...</div>
         ) : (
           <div className="p-5 space-y-6">
 
             {/* Info */}
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
-                <Mail size={13} className="text-gray-600 flex-shrink-0" />
-                <span className="text-gray-300">{detail.email}</span>
+                <Mail size={13} style={{ color: 'var(--muted)' }} className="flex-shrink-0" />
+                <span style={{ color: 'var(--ink)' }}>{detail.email}</span>
               </div>
               <div className="flex items-center gap-2 text-sm flex-wrap">
                 <PlanBadge slug={detail.plan_slug} name={detail.plan_name} />
                 <StatusBadge status={detail.status} />
                 {detail.status === 'trial' && detail.trial_ends_at && (
-                  <span className="text-xs text-amber-400">
+                  <span className="text-xs text-amber-500">
                     trial hasta {fmtDate(detail.trial_ends_at)}
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-4 text-xs text-gray-500 mt-1">
+              <div className="flex items-center gap-4 text-xs mt-1" style={{ color: 'var(--muted)' }}>
                 <span className="flex items-center gap-1">
                   <Users size={11} /> {detail.usage?.users ?? 0} usuarios
                 </span>
@@ -329,15 +331,13 @@ function DetailPanel({ tenant, plans, onClose, onRefresh }) {
 
             {/* Estado */}
             <section>
-              <h3 className="text-[11px] font-bold uppercase tracking-widest text-gray-600 mb-3">Estado</h3>
+              <h3 className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: 'var(--muted)' }}>Estado</h3>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => changeStatus('active')}
                   disabled={detail.status === 'active' || saving === 'status'}
                   className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors disabled:opacity-40"
                   style={{ backgroundColor: 'rgba(16,185,129,.15)', color: '#10B981' }}
-                  onMouseEnter={e => { if (detail.status !== 'active') e.currentTarget.style.backgroundColor = 'rgba(16,185,129,.25)'; }}
-                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(16,185,129,.15)'}
                 >
                   <CheckCircle2 size={13} /> Activar
                 </button>
@@ -346,8 +346,6 @@ function DetailPanel({ tenant, plans, onClose, onRefresh }) {
                   disabled={detail.status === 'suspended' || saving === 'status'}
                   className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors disabled:opacity-40"
                   style={{ backgroundColor: 'rgba(239,68,68,.12)', color: '#EF4444' }}
-                  onMouseEnter={e => { if (detail.status !== 'suspended') e.currentTarget.style.backgroundColor = 'rgba(239,68,68,.22)'; }}
-                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(239,68,68,.12)'}
                 >
                   <Ban size={13} /> Suspender
                 </button>
@@ -356,8 +354,6 @@ function DetailPanel({ tenant, plans, onClose, onRefresh }) {
                   disabled={detail.status === 'trial' || saving === 'status'}
                   className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors disabled:opacity-40"
                   style={{ backgroundColor: 'rgba(245,158,11,.12)', color: '#F59E0B' }}
-                  onMouseEnter={e => { if (detail.status !== 'trial') e.currentTarget.style.backgroundColor = 'rgba(245,158,11,.22)'; }}
-                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(245,158,11,.12)'}
                 >
                   <Clock size={13} /> Poner en trial
                 </button>
@@ -367,15 +363,14 @@ function DetailPanel({ tenant, plans, onClose, onRefresh }) {
                     disabled={detail.status === 'cancelled' || saving === 'status'}
                     className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors disabled:opacity-40"
                     style={{ backgroundColor: 'rgba(107,114,128,.12)', color: '#9CA3AF' }}
-                    onMouseEnter={e => { if (detail.status !== 'cancelled') e.currentTarget.style.backgroundColor = 'rgba(107,114,128,.22)'; }}
-                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(107,114,128,.12)'}
                   >
                     <Ban size={13} /> Cancelar cuenta
                   </button>
                 ) : (
                   <button
                     onClick={() => changeStatus('cancelled')}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-colors bg-red-900/40 text-red-400"
+                    className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-colors"
+                    style={{ backgroundColor: 'rgba(239,68,68,.18)', color: '#EF4444' }}
                   >
                     <AlertTriangle size={13} /> ¿Confirmar?
                   </button>
@@ -385,19 +380,19 @@ function DetailPanel({ tenant, plans, onClose, onRefresh }) {
 
             {/* Plan */}
             <section>
-              <h3 className="text-[11px] font-bold uppercase tracking-widest text-gray-600 mb-3">Plan</h3>
+              <h3 className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: 'var(--muted)' }}>Plan</h3>
               <div className="flex gap-2">
                 <select
                   value={selectedPlan}
                   onChange={e => setSelectedPlan(e.target.value)}
-                  className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-indigo-500 outline-none"
+                  className="input flex-1"
                 >
                   {plans.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
                 <button
                   onClick={savePlan}
                   disabled={String(selectedPlan) === String(detail.plan_id) || saving === 'plan'}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold transition-colors disabled:opacity-40"
+                  className="btn-primary px-4 disabled:opacity-40"
                 >
                   {saving === 'plan' ? '...' : 'Guardar'}
                 </button>
@@ -406,25 +401,26 @@ function DetailPanel({ tenant, plans, onClose, onRefresh }) {
 
             {/* Trial */}
             <section>
-              <h3 className="text-[11px] font-bold uppercase tracking-widest text-gray-600 mb-3">Extender trial</h3>
+              <h3 className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: 'var(--muted)' }}>Extender trial</h3>
               <div className="flex gap-2 items-center">
                 <input
                   type="number" min="1" max="365"
                   value={trialDays}
                   onChange={e => setTrialDays(Number(e.target.value))}
-                  className="w-20 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm text-center focus:border-indigo-500 outline-none"
+                  className="input w-20 text-center"
                 />
-                <span className="text-gray-500 text-sm">días</span>
+                <span className="text-sm" style={{ color: 'var(--muted)' }}>días</span>
                 <button
                   onClick={doExtendTrial}
                   disabled={saving === 'trial'}
-                  className="ml-auto px-4 py-2 bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 rounded-lg text-sm font-semibold transition-colors disabled:opacity-40"
+                  className="ml-auto px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-40"
+                  style={{ backgroundColor: 'rgba(245,158,11,.15)', color: '#F59E0B' }}
                 >
                   {saving === 'trial' ? '...' : 'Extender'}
                 </button>
               </div>
               {detail.trial_ends_at && (
-                <p className="text-xs text-gray-600 mt-1.5">
+                <p className="text-xs mt-1.5" style={{ color: 'var(--muted)' }}>
                   Trial actual: hasta {fmtDate(detail.trial_ends_at)}
                 </p>
               )}
@@ -433,12 +429,12 @@ function DetailPanel({ tenant, plans, onClose, onRefresh }) {
             {/* Módulos */}
             <section>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-[11px] font-bold uppercase tracking-widest text-gray-600">Módulos</h3>
+                <h3 className="text-[11px] font-bold uppercase tracking-widest" style={{ color: 'var(--muted)' }}>Módulos</h3>
                 {hasUnsavedFeatures && (
                   <button
                     onClick={saveFeatures}
                     disabled={saving === 'features'}
-                    className="text-xs px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold transition-colors"
+                    className="btn-primary text-xs px-3 py-1"
                   >
                     {saving === 'features' ? 'Guardando...' : 'Guardar cambios'}
                   </button>
@@ -448,31 +444,29 @@ function DetailPanel({ tenant, plans, onClose, onRefresh }) {
                 {ALL_FEATURES.map(({ key, label }) => {
                   const isOn = effectiveFeatures[key] ?? false;
                   const isOverridden = featOverride[key] !== undefined;
-                  const planDefault = detail.plan_features?.[key] ?? false;
                   return (
                     <div key={key}
-                      className="flex items-center justify-between px-3 py-2 rounded-lg"
-                      style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}
+                      className="flex items-center justify-between px-3 py-2 rounded-lg border"
+                      style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}
                     >
                       <div>
-                        <p className="text-sm text-gray-200">{label}</p>
-                        {isOverridden && (
-                          <p className="text-[10px] text-indigo-400 flex items-center gap-1">
+                        <p className="text-sm" style={{ color: 'var(--ink)' }}>{label}</p>
+                        {isOverridden ? (
+                          <p className="text-[10px] text-indigo-500 flex items-center gap-1">
                             <Shield size={9} /> override
                             {' · '}
-                            <button onClick={() => resetFeature(key)} className="hover:text-indigo-300 underline">
+                            <button onClick={() => resetFeature(key)} className="hover:text-indigo-400 underline">
                               restaurar plan
                             </button>
                           </p>
-                        )}
-                        {!isOverridden && (
-                          <p className="text-[10px] text-gray-600">del plan</p>
+                        ) : (
+                          <p className="text-[10px]" style={{ color: 'var(--muted)' }}>del plan</p>
                         )}
                       </div>
                       <button onClick={() => toggleFeature(key)} className="flex-shrink-0 ml-3">
                         {isOn
-                          ? <ToggleRight size={24} className="text-emerald-400" />
-                          : <ToggleLeft size={24} className="text-gray-600" />
+                          ? <ToggleRight size={24} className="text-emerald-500" />
+                          : <ToggleLeft size={24} style={{ color: 'var(--muted)' }} />
                         }
                       </button>
                     </div>
@@ -483,7 +477,7 @@ function DetailPanel({ tenant, plans, onClose, onRefresh }) {
 
             {/* Notas */}
             <section>
-              <h3 className="text-[11px] font-bold uppercase tracking-widest text-gray-600 mb-3">Notas internas</h3>
+              <h3 className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: 'var(--muted)' }}>Notas internas</h3>
               <NotesEditor tenantId={tenant.id} initial={detail.notes} onSaved={onRefresh} />
             </section>
 
@@ -516,11 +510,10 @@ function NotesEditor({ tenantId, initial, onSaved }) {
         onChange={e => setNotes(e.target.value)}
         rows={3}
         placeholder="Notas privadas sobre este cliente..."
-        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm resize-none focus:border-indigo-500 outline-none placeholder:text-gray-600"
+        className="input resize-none"
       />
       {dirty && (
-        <button onClick={save} disabled={saving}
-          className="mt-2 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg text-xs font-medium transition-colors">
+        <button onClick={save} disabled={saving} className="btn-secondary mt-2 text-xs">
           {saving ? 'Guardando...' : 'Guardar nota'}
         </button>
       )}
@@ -532,6 +525,7 @@ function NotesEditor({ tenantId, initial, onSaved }) {
 
 export default function AdminPanel() {
   const navigate = useNavigate();
+  const { dark, toggle: toggleTheme } = useTheme();
   const [tenants, setTenants] = useState([]);
   const [stats, setStats] = useState(null);
   const [plans, setPlans] = useState([]);
@@ -586,39 +580,44 @@ export default function AdminPanel() {
   });
 
   if (loading) return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center text-gray-500">
+    <div className="min-h-screen flex items-center justify-center text-sm" style={{ backgroundColor: 'var(--bg)', color: 'var(--muted)' }}>
       Cargando panel...
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--bg)', color: 'var(--ink)' }}>
       {/* Header */}
-      <header className="bg-gray-900 border-b border-gray-800 px-5 py-3.5 flex items-center justify-between flex-shrink-0">
+      <header className="px-5 py-3.5 flex items-center justify-between flex-shrink-0 border-b"
+              style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white text-sm font-bold">G</div>
           <div>
-            <span className="font-semibold text-white text-sm">Super Admin</span>
-            <span className="text-gray-600 text-xs ml-2">Gestix</span>
+            <span className="font-semibold text-sm" style={{ color: 'var(--ink)' }}>Super Admin</span>
+            <span className="text-xs ml-2" style={{ color: 'var(--muted)' }}>Gestix</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowCreate(true)}
-            className="flex items-center gap-1.5 text-sm bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-medium transition-colors"
+            className="btn-primary text-sm px-3 py-1.5"
           >
             <Plus size={14} /> Nuevo cliente
           </button>
           <button onClick={handleCheckTrials}
-            className="flex items-center gap-1.5 text-sm bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded-lg transition-colors">
+            className="btn-secondary text-sm px-3 py-1.5">
             <RefreshCw size={14} /> Trials
           </button>
           <button onClick={load}
-            className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white transition-colors" title="Actualizar">
+            className="btn-secondary p-2" title="Actualizar">
             <RotateCcw size={14} />
           </button>
+          <button onClick={toggleTheme}
+            className="btn-secondary p-2" title={dark ? 'Modo claro' : 'Modo oscuro'}>
+            {dark ? <Sun size={14} /> : <Moon size={14} />}
+          </button>
           <button onClick={handleLogout}
-            className="p-2 rounded-lg text-gray-600 hover:text-gray-300 transition-colors" title="Cerrar sesión">
+            className="p-2 rounded-lg transition-colors" style={{ color: 'var(--muted)' }} title="Cerrar sesión">
             <LogOut size={14} />
           </button>
         </div>
@@ -628,20 +627,21 @@ export default function AdminPanel() {
       <div className="px-5 pt-5 pb-4 flex-shrink-0">
         {stats?.counts && (
           <div className="grid grid-cols-5 gap-3 mb-4">
-            <StatCard label="Total clientes"  value={stats.counts.total}     color="#E5E7EB" />
+            <StatCard label="Total clientes"  value={stats.counts.total}     color="var(--ink)"  />
             <StatCard label="En trial"        value={stats.counts.trialing}  color="#F59E0B" />
             <StatCard label="Activos"         value={stats.counts.active}    color="#10B981" />
             <StatCard label="Suspendidos"     value={stats.counts.suspended} color="#EF4444" />
-            <StatCard label="Cancelados"      value={stats.counts.cancelled} color="#6B7280" />
+            <StatCard label="Cancelados"      value={stats.counts.cancelled} color="var(--muted)" />
           </div>
         )}
         {stats?.planBreakdown && (
           <div className="grid grid-cols-3 gap-3">
             {stats.planBreakdown.map(p => (
-              <div key={p.slug} className="bg-gray-900 rounded-xl px-4 py-3 border border-gray-800 flex items-center justify-between">
+              <div key={p.slug} className="rounded-xl px-4 py-3 border flex items-center justify-between"
+                   style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
                 <div>
-                  <p className="text-xs text-gray-500 mb-0.5">{p.name}</p>
-                  <p className="text-lg font-bold text-white">{p.count}</p>
+                  <p className="text-xs mb-0.5" style={{ color: 'var(--muted)' }}>{p.name}</p>
+                  <p className="text-lg font-bold" style={{ color: 'var(--ink)' }}>{p.count}</p>
                 </div>
                 <span className="text-[11px] px-2 py-0.5 rounded-full font-semibold"
                       style={{ color: PLAN_COLORS[p.slug] || '#6B7280', backgroundColor: `${PLAN_COLORS[p.slug] || '#6B7280'}22` }}>
@@ -660,16 +660,16 @@ export default function AdminPanel() {
           {/* Filters */}
           <div className="px-5 pb-3 flex items-center gap-3 flex-shrink-0">
             <div className="relative flex-1">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--muted)' }} />
               <input
                 value={search} onChange={e => setSearch(e.target.value)}
                 placeholder="Buscar por nombre, subdominio o email..."
-                className="w-full bg-gray-900 border border-gray-800 rounded-lg pl-9 pr-3 py-2 text-sm text-gray-200 placeholder:text-gray-600 focus:border-gray-600 outline-none"
+                className="input pl-9"
               />
             </div>
             <select
               value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
-              className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-gray-600 outline-none"
+              className="input w-auto"
             >
               <option value="">Todos</option>
               <option value="trial">Trial</option>
@@ -682,33 +682,33 @@ export default function AdminPanel() {
           {/* Table */}
           <div className="flex-1 overflow-auto">
             <table className="w-full text-sm min-w-[700px]">
-              <thead className="sticky top-0 bg-gray-900 z-10">
+              <thead className="sticky top-0 z-10" style={{ backgroundColor: 'var(--surface)' }}>
                 <tr>
                   {['Cliente', 'Subdominio', 'Plan', 'Estado', 'Ventas', 'Trial/Alta', ''].map(h => (
-                    <th key={h} className="text-left px-4 py-3 text-[11px] text-gray-500 font-semibold uppercase tracking-wider border-b border-gray-800">
+                    <th key={h} className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider border-b"
+                        style={{ color: 'var(--muted)', borderColor: 'var(--border)' }}>
                       {h}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-800/60">
+              <tbody>
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="text-center py-12 text-gray-600">
+                    <td colSpan={7} className="text-center py-12 text-sm" style={{ color: 'var(--muted)' }}>
                       {search || filterStatus ? 'Sin resultados para este filtro' : 'No hay clientes aún'}
                     </td>
                   </tr>
                 )}
-                {filtered.map(t => (
+                {filtered.map((t, i) => (
                   <tr
                     key={t.id}
                     onClick={() => setSelected(t.id === selected?.id ? null : t)}
-                    className="cursor-pointer transition-colors"
+                    className="cursor-pointer transition-colors border-b table-row-hover"
                     style={{
-                      backgroundColor: selected?.id === t.id ? 'rgba(99,102,241,.08)' : 'transparent',
+                      borderColor: 'var(--border)',
+                      backgroundColor: selected?.id === t.id ? 'var(--brand-soft)' : 'transparent',
                     }}
-                    onMouseEnter={e => { if (selected?.id !== t.id) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,.03)'; }}
-                    onMouseLeave={e => { if (selected?.id !== t.id) e.currentTarget.style.backgroundColor = 'transparent'; }}
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
@@ -717,27 +717,28 @@ export default function AdminPanel() {
                           {initials(t.name)}
                         </div>
                         <div>
-                          <p className="font-medium text-white text-sm">{t.name}</p>
-                          <p className="text-[11px] text-gray-500">{t.email}</p>
+                          <p className="font-medium text-sm" style={{ color: 'var(--ink)' }}>{t.name}</p>
+                          <p className="text-[11px]" style={{ color: 'var(--muted)' }}>{t.email}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs text-indigo-400">{t.subdomain}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-indigo-500">{t.subdomain}</td>
                     <td className="px-4 py-3">
                       <PlanBadge slug={t.plan_slug} name={t.plan_name} />
                     </td>
                     <td className="px-4 py-3">
                       <StatusBadge status={t.status} />
                     </td>
-                    <td className="px-4 py-3 text-gray-400 text-sm">{t.total_sales ?? 0}</td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">
+                    <td className="px-4 py-3 text-sm" style={{ color: 'var(--muted)' }}>{t.total_sales ?? 0}</td>
+                    <td className="px-4 py-3 text-xs" style={{ color: 'var(--muted)' }}>
                       {t.status === 'trial' && t.trial_ends_at
                         ? <span className="text-amber-500">hasta {fmtDate(t.trial_ends_at)}</span>
                         : fmtDate(t.created_at)
                       }
                     </td>
                     <td className="px-4 py-3">
-                      <ChevronRight size={14} className={`transition-transform ${selected?.id === t.id ? 'rotate-90 text-indigo-400' : 'text-gray-700'}`} />
+                      <ChevronRight size={14} className={`transition-transform ${selected?.id === t.id ? 'rotate-90 text-indigo-500' : ''}`}
+                                    style={{ color: selected?.id === t.id ? undefined : 'var(--border)' }} />
                     </td>
                   </tr>
                 ))}
@@ -745,11 +746,12 @@ export default function AdminPanel() {
             </table>
           </div>
 
-          <div className="px-5 py-2.5 border-t border-gray-800 flex-shrink-0">
-            <p className="text-xs text-gray-600">
+          <div className="px-5 py-2.5 border-t flex-shrink-0" style={{ borderColor: 'var(--border)' }}>
+            <p className="text-xs" style={{ color: 'var(--muted)' }}>
               {filtered.length} de {tenants.length} clientes
               {(search || filterStatus) && (
-                <button onClick={() => { setSearch(''); setFilterStatus(''); }} className="ml-2 text-indigo-400 hover:text-indigo-300">
+                <button onClick={() => { setSearch(''); setFilterStatus(''); }}
+                        className="ml-2 text-indigo-500 hover:text-indigo-400">
                   Limpiar filtros
                 </button>
               )}
@@ -757,17 +759,14 @@ export default function AdminPanel() {
           </div>
         </div>
 
-        {/* Detail panel */}
+        {/* Detail panel — desktop */}
         {selected && (
-          <div className="hidden lg:flex flex-col flex-1 min-h-0 border-l border-gray-800">
+          <div className="hidden lg:flex flex-col flex-1 min-h-0 border-l" style={{ borderColor: 'var(--border)' }}>
             <DetailPanel
               tenant={selected}
               plans={plans}
               onClose={() => setSelected(null)}
-              onRefresh={() => {
-                load();
-                // Keep the updated tenant in the list after refresh
-              }}
+              onRefresh={load}
             />
           </div>
         )}
@@ -775,7 +774,7 @@ export default function AdminPanel() {
 
       {/* Mobile detail modal */}
       {selected && (
-        <div className="lg:hidden fixed inset-0 z-40 bg-gray-950 flex flex-col">
+        <div className="lg:hidden fixed inset-0 z-40 flex flex-col" style={{ backgroundColor: 'var(--bg)' }}>
           <DetailPanel
             tenant={selected}
             plans={plans}

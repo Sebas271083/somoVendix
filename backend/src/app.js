@@ -42,8 +42,11 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const extraOrigins = (process.env.ALLOWED_ORIGINS || '')
-  .split(',').map(s => s.trim()).filter(Boolean);
+const extraOrigins = [
+  ...(process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean),
+  // FRONTEND_URL permite apuntar al dominio del frontend en producción
+  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL.replace(/\/$/, '')] : []),
+];
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -61,7 +64,7 @@ app.use(cors({
     ) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      callback(new Error(`CORS: origin no permitido: ${origin}`));
     }
   },
   credentials: true,

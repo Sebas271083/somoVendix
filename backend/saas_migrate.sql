@@ -91,7 +91,7 @@ ON DUPLICATE KEY UPDATE status = 'active';
 -- Super-admin inicial: superadmin@gestix.app / gestix2024
 INSERT INTO admins (name, email, password)
 VALUES ('Super Admin', 'superadmin@gestix.app',
-  '$2a$10$VWu7N84x4agw55jyzUaeI..lr04Y2HCaa1RGWBGZsrZ/sgm8TPTXi')
+  '$2a$10$.qHwlpwuWvq3rfA1uYHdu.dnA0fbiTbh.1bh6ASROZTTKOGJaaJoq')
 ON DUPLICATE KEY UPDATE name = VALUES(name);
 
 -- =============================================
