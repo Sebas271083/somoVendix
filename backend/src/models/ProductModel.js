@@ -99,8 +99,16 @@ export const ProductModel = {
       }
     }
 
+    // Campos enteros que no admiten string vacío — convertir a null
+    const intFields = new Set(['supplier_id', 'category_id', 'has_variants', 'active']);
+    const values = keys.map(k => {
+      const v = fields[k];
+      if (intFields.has(k) && (v === '' || v === undefined)) return null;
+      return v;
+    });
+
     const sql = `UPDATE products SET ${keys.map(k => `${k}=?`).join(', ')}, updated_at=NOW() WHERE id=?`;
-    await query(sql, [...keys.map(k => fields[k]), id]);
+    await query(sql, [...values, id]);
   },
 
   async adjustStock(id, qty, conn) {
