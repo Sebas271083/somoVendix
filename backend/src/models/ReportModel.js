@@ -52,8 +52,8 @@ export const ReportModel = {
        WHERE s.tenant_id = ? AND DATE(s.created_at) BETWEEN ? AND ? AND s.status = 'completed'
        GROUP BY p.id
        ORDER BY total_qty DESC
-       LIMIT ?`,
-      [tenant_id, from, to, limit]
+       LIMIT ${parseInt(limit) || 10}`,
+      [tenant_id, from, to]
     );
   },
 
@@ -71,8 +71,8 @@ export const ReportModel = {
          AND c.name != 'Consumidor Final'
        GROUP BY c.id
        ORDER BY total_spent DESC
-       LIMIT ?`,
-      [tenant_id, from, to, limit]
+       LIMIT ${parseInt(limit) || 10}`,
+      [tenant_id, from, to]
     );
   },
 
@@ -324,7 +324,7 @@ export const ReportModel = {
          COUNT(*) AS count,
          SUM(r.total) AS total,
          SUM(CASE WHEN r.type = 'exchange' THEN 1 ELSE 0 END) AS exchanges,
-         SUM(CASE WHEN r.type = 'return' THEN 1 ELSE 0 END) AS returns,
+         SUM(CASE WHEN r.type = 'return' OR r.type IS NULL THEN 1 ELSE 0 END) AS returns,
          r.refund_method
        FROM returns r
        WHERE r.tenant_id = ? AND DATE(r.created_at) BETWEEN ? AND ?

@@ -2,6 +2,9 @@
 -- migrate_v9: columnas faltantes en products + tablas purchase_orders
 -- ============================================================
 
+-- Columna type en returns (usada por ReportModel.getReturnsSummary)
+ALTER TABLE returns ADD COLUMN type ENUM('return','exchange') NOT NULL DEFAULT 'return';
+
 -- Columnas que el modelo usa pero nunca se agregaron al schema inicial
 ALTER TABLE products ADD COLUMN supplier_id INT DEFAULT NULL;
 ALTER TABLE products ADD COLUMN unit VARCHAR(30) DEFAULT 'unidad';

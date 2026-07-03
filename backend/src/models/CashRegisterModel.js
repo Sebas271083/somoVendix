@@ -192,8 +192,8 @@ export const CashRegisterModel = {
        JOIN users u ON u.id = cr.user_id
        WHERE cr.tenant_id = ? AND cr.status = 'closed'
        ORDER BY cr.closed_at DESC
-       LIMIT ?`,
-      [tenant_id, limit]
+       LIMIT ${parseInt(limit) || 50}`,
+      [tenant_id]
     );
 
     if (!registers.length) return [];
