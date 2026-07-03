@@ -5,6 +5,14 @@
 -- Columna type en returns (usada por ReportModel.getReturnsSummary)
 ALTER TABLE returns ADD COLUMN type ENUM('return','exchange') NOT NULL DEFAULT 'return';
 
+-- Columnas faltantes en customers
+ALTER TABLE customers ADD COLUMN notes TEXT DEFAULT NULL;
+ALTER TABLE customers ADD COLUMN segment VARCHAR(50) DEFAULT NULL;
+ALTER TABLE customers ADD COLUMN birthday DATE DEFAULT NULL;
+ALTER TABLE customers ADD COLUMN tags JSON DEFAULT NULL;
+ALTER TABLE customers ADD COLUMN preferences JSON DEFAULT NULL;
+ALTER TABLE customers ADD COLUMN iva_condition VARCHAR(50) DEFAULT NULL;
+
 -- Columnas que el modelo usa pero nunca se agregaron al schema inicial
 ALTER TABLE products ADD COLUMN supplier_id INT DEFAULT NULL;
 ALTER TABLE products ADD COLUMN unit VARCHAR(30) DEFAULT 'unidad';
