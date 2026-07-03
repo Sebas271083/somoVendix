@@ -571,9 +571,11 @@ export default function Customers() {
                             onMouseLeave={e => e.currentTarget.style.color = ''}>
                             <Edit2 size={14} />
                           </button>
-                          {isAdmin && c.document_number !== '00000000' && (
+                          {c.document_number !== '00000000' && (
                             <button onClick={() => handleDeactivate(c)} title="Desactivar cliente"
-                              className="text-gray-300 p-1 rounded transition-colors hover:text-red-500">
+                              className="text-gray-400 p-1 rounded transition-colors"
+                              onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
+                              onMouseLeave={e => e.currentTarget.style.color = ''}>
                               <UserX size={14} />
                             </button>
                           )}
