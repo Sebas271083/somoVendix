@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   Plus, Search, Edit2, History, DollarSign, Send, X, AlertTriangle,
-  MessageSquare, Clock, Star, BarChart2, Upload, Tag, ChevronDown, Trash2
+  MessageSquare, Clock, Star, BarChart2, Upload, Tag, ChevronDown, Trash2, UserX,
 } from 'lucide-react';
 import { customersApi, paymentsApi } from '../services/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -436,6 +436,15 @@ export default function Customers() {
     } catch (err) { toast.error(err?.error || 'Error al guardar'); }
   };
 
+  const handleDeactivate = async (c) => {
+    if (!confirm(`¿Desactivar a "${c.name}"? No aparecerá más en la lista.`)) return;
+    try {
+      await customersApi.deactivate(c.id);
+      toast.success('Cliente desactivado');
+      load();
+    } catch (err) { toast.error(err?.error || 'Error al desactivar'); }
+  };
+
   const handleCSVImport = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -562,6 +571,12 @@ export default function Customers() {
                             onMouseLeave={e => e.currentTarget.style.color = ''}>
                             <Edit2 size={14} />
                           </button>
+                          {isAdmin && c.document_number !== '00000000' && (
+                            <button onClick={() => handleDeactivate(c)} title="Desactivar cliente"
+                              className="text-gray-300 p-1 rounded transition-colors hover:text-red-500">
+                              <UserX size={14} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

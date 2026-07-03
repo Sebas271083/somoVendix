@@ -22,6 +22,7 @@ router.post('/:id/loyalty/preview', customerController.loyaltyPreview);
 
 router.put('/:id', customerController.update);
 router.patch('/price-lists/:segment', requireAdmin, customerController.updatePriceList);
+router.patch('/:id/deactivate', requireAdmin, customerController.deactivate);
 router.patch('/:id/loyalty/adjust', requireAdmin, customerController.loyaltyAdjust);
 
 router.delete('/:id/interactions/:intId', requireAdmin, customerController.deleteInteraction);

@@ -31,6 +31,13 @@ export const customerController = {
     } catch (err) { next(err); }
   },
 
+  async deactivate(req, res, next) {
+    try {
+      await CustomerModel.deactivate(req.params.id);
+      res.json({ ok: true });
+    } catch (err) { next(err); }
+  },
+
   async salesHistory(req, res, next) {
     try {
       res.json(await CustomerModel.getSalesHistory(req.params.id));

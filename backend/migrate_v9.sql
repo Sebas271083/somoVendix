@@ -12,6 +12,7 @@ ALTER TABLE customers ADD COLUMN birthday DATE DEFAULT NULL;
 ALTER TABLE customers ADD COLUMN tags JSON DEFAULT NULL;
 ALTER TABLE customers ADD COLUMN preferences JSON DEFAULT NULL;
 ALTER TABLE customers ADD COLUMN iva_condition VARCHAR(50) DEFAULT NULL;
+ALTER TABLE customers ADD COLUMN active TINYINT(1) NOT NULL DEFAULT 1;
 
 -- Columnas que el modelo usa pero nunca se agregaron al schema inicial
 ALTER TABLE products ADD COLUMN supplier_id INT DEFAULT NULL;

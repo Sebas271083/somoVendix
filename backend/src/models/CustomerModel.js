@@ -35,7 +35,7 @@ export const CustomerModel = {
         sql += ' AND (c.name LIKE ? OR c.document_number LIKE ? OR c.email LIKE ? OR c.phone LIKE ?)';
         p.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
       }
-      sql += ' GROUP BY c.id ORDER BY c.name';
+      sql += ' AND (c.active = 1 OR c.active IS NULL) GROUP BY c.id ORDER BY c.name';
       return await query(sql, p);
     } catch (err) {
       if (err.code === 'ER_NO_SUCH_TABLE' || err.code === 'ER_BAD_FIELD_ERROR') {
@@ -95,6 +95,10 @@ export const CustomerModel = {
        tags ? JSON.stringify(typeof tags === 'string' ? tags.split(',').map(t => t.trim()).filter(Boolean) : tags) : null,
        preferences || null, iva_condition || 'consumidor_final', id]
     );
+  },
+
+  async deactivate(id) {
+    await query('UPDATE customers SET active = 0 WHERE id = ?', [id]);
   },
 
   async updateBalance(id, amount, conn) {

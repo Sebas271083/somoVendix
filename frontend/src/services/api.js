@@ -130,6 +130,7 @@ export const customersApi = {
   getPriceLists: () => api.get('/customers/price-lists'),
   updatePriceList: (segment, discount_pct) => api.patch(`/customers/price-lists/${segment}`, { discount_pct }),
   importCSV: (customers) => api.post('/customers/import', { customers }),
+  deactivate: (id) => api.patch(`/customers/${id}/deactivate`),
 };
 
 export const salesApi = {

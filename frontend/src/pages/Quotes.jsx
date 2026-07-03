@@ -89,7 +89,7 @@ function QuoteForm({ initial, onSave, onClose }) {
   const [selectedCustomer, setSelectedCustomer] = useState(initial?.customer_id ? { id: initial.customer_id, name: initial.customer_name } : null);
   const [productSearch, setProductSearch] = useState('');
   const [productResults, setProductResults] = useState([]);
-  const [items, setItems] = useState(initial?.items?.map(i => ({ product_id: i.product_id, product_name: i.product_name, quantity: i.quantity, unit_price: i.unit_price, discount: i.discount, subtotal: i.subtotal })) || []);
+  const [items, setItems] = useState(initial?.items?.map(i => ({ product_id: i.product_id, product_name: i.product_name, quantity: parseFloat(i.quantity) || 1, unit_price: parseFloat(i.unit_price) || 0, discount: parseFloat(i.discount) || 0, subtotal: parseFloat(i.subtotal) || 0 })) || []);
   const [notes, setNotes] = useState(initial?.notes || '');
   const [validUntil, setValidUntil] = useState(initial?.valid_until?.split('T')[0] || '');
   const [status, setStatus] = useState(initial?.status || 'draft');
@@ -116,7 +116,7 @@ function QuoteForm({ initial, onSave, onClose }) {
           ? { ...i, quantity: i.quantity + 1, subtotal: (i.quantity + 1) * i.unit_price }
           : i);
       }
-      return [...prev, { product_id: product.id, product_name: product.name, quantity: 1, unit_price: product.price, discount: 0, subtotal: product.price }];
+      return [...prev, { product_id: product.id, product_name: product.name, quantity: 1, unit_price: parseFloat(product.price) || 0, discount: 0, subtotal: parseFloat(product.price) || 0 }];
     });
     setProductSearch('');
     setProductResults([]);
@@ -133,7 +133,7 @@ function QuoteForm({ initial, onSave, onClose }) {
 
   const removeItem = (idx) => setItems(prev => prev.filter((_, i) => i !== idx));
 
-  const subtotal = items.reduce((s, i) => s + i.subtotal, 0);
+  const subtotal = items.reduce((s, i) => s + (parseFloat(i.subtotal) || 0), 0);
   const discount = 0;
   const tax = 0;
   const total = subtotal - discount + tax;
