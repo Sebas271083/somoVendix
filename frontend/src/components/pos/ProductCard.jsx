@@ -30,69 +30,65 @@ export default function ProductCard({ product, onAdd }) {
 
   return (
     <div
-      className="card cursor-pointer hover:shadow-md transition-all group relative overflow-hidden"
+      className="card cursor-pointer transition-all group relative select-none"
       style={{ padding: 0, borderTop: `3px solid ${accent}` }}
       onClick={() => onAdd(product)}
+      onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.10)'}
+      onMouseLeave={e => e.currentTarget.style.boxShadow = ''}
     >
-      {/* Cart qty badge */}
-      {cartQty > 0 && (
-        <span
-          className="absolute top-2.5 left-2.5 z-10 w-5 h-5 rounded-full text-white text-[10px] font-bold flex items-center justify-center shadow"
-          style={{ backgroundColor: 'var(--brand)' }}
+      <div className="flex items-center gap-2.5 p-2.5 pr-2">
+        {/* Thumbnail / icon */}
+        <div
+          className="w-11 h-11 flex-shrink-0 rounded-xl flex items-center justify-center overflow-hidden"
+          style={{ backgroundColor: `${accent}18` }}
         >
-          {cartQty}
-        </span>
-      )}
+          {product.image_url ? (
+            <img
+              src={product.image_url}
+              alt=""
+              className="w-11 h-11 object-cover"
+              onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement.innerHTML = ''; }}
+            />
+          ) : (
+            <Icon size={20} strokeWidth={1.3} style={{ color: accent, opacity: 0.8 }} />
+          )}
+        </div>
 
-      {/* Low stock badge */}
-      {isLowStock && cartQty === 0 && (
-        <span className="absolute top-2.5 left-2.5 z-10 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-orange-500 text-white">
-          Stock bajo
-        </span>
-      )}
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <h3 className="text-[11px] font-semibold leading-snug line-clamp-2" style={{ color: 'var(--ink)' }}>
+            {product.name}
+          </h3>
+          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+            <span className="text-sm font-bold" style={{ color: accent }}>
+              ${Number(product.price).toLocaleString('es-AR')}
+            </span>
+            {isLowStock && (
+              <span className="text-[9px] font-semibold px-1 py-0.5 rounded bg-orange-100 text-orange-600">
+                ↓ stock
+              </span>
+            )}
+            {!!product.has_variants && (
+              <span className="flex items-center gap-0.5 text-[9px] font-medium px-1 py-0.5 rounded"
+                    style={{ backgroundColor: 'var(--bg)', color: 'var(--muted)' }}>
+                <Layers size={8} /> var.
+              </span>
+            )}
+          </div>
+        </div>
 
-      {/* Variants badge */}
-      {!!product.has_variants && (
-        <span className="absolute top-2.5 right-2.5 z-10 flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-md"
-              style={{ backgroundColor: 'var(--bg)', color: 'var(--muted)' }}>
-          <Layers size={9} /> var.
-        </span>
-      )}
-
-      {/* Image / icon area */}
-      <div
-        className="h-32 flex items-center justify-center relative"
-        style={{ backgroundColor: `${accent}12` }}
-      >
-        {product.image_url ? (
-          <img src={product.image_url} alt={product.name} className="h-24 object-contain px-2" />
-        ) : (
-          <Icon size={40} strokeWidth={1.2} style={{ color: accent, opacity: 0.65 }} />
-        )}
-
-        {/* Add button — subtle at rest, bold on hover */}
+        {/* Cart qty / add button */}
         <button
-          className="absolute bottom-2.5 right-2.5 w-7 h-7 rounded-full text-white flex items-center justify-center shadow-sm transition-all duration-150"
-          style={{ backgroundColor: accent, opacity: 0.7 }}
+          className="w-7 h-7 rounded-full text-white flex items-center justify-center flex-shrink-0 transition-transform"
+          style={{ backgroundColor: cartQty > 0 ? 'var(--brand)' : accent, opacity: cartQty > 0 ? 1 : 0.75 }}
           onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'scale(1.1)'; }}
-          onMouseLeave={e => { e.currentTarget.style.opacity = '0.7'; e.currentTarget.style.transform = 'scale(1)'; }}
+          onMouseLeave={e => { e.currentTarget.style.opacity = cartQty > 0 ? '1' : '0.75'; e.currentTarget.style.transform = 'scale(1)'; }}
           onClick={e => { e.stopPropagation(); onAdd(product); }}
         >
-          <Plus size={14} strokeWidth={2.5} />
+          {cartQty > 0
+            ? <span className="text-[10px] font-bold">{cartQty}</span>
+            : <Plus size={13} strokeWidth={2.5} />}
         </button>
-      </div>
-
-      {/* Info */}
-      <div className="p-3">
-        <h3 className="text-xs font-medium leading-snug line-clamp-2 min-h-[2.5rem]" style={{ color: 'var(--ink)' }}>
-          {product.name}
-        </h3>
-        <p className="text-sm font-bold mt-1.5" style={{ color: accent }}>
-          ${product.price.toLocaleString('es-AR')}
-        </p>
-        <p className="text-[11px] mt-0.5" style={{ color: 'var(--muted)' }}>
-          {product.stock ?? '—'} u. en stock
-        </p>
       </div>
     </div>
   );

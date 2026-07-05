@@ -15,7 +15,7 @@ function SkeletonCard() {
 export default function ProductGrid({ products, onAdd, loading }) {
   if (loading) {
     return (
-      <div className="h-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 p-4 overflow-y-auto content-start">
+      <div className="h-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 p-3 overflow-y-auto content-start">
         {Array.from({ length: 8 }).map((_, i) => (
           <SkeletonCard key={i} />
         ))}
@@ -32,7 +32,7 @@ export default function ProductGrid({ products, onAdd, loading }) {
   }
 
   return (
-    <div className="h-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 p-4 overflow-y-auto content-start">
+    <div className="h-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 p-3 overflow-y-auto content-start">
       {products.map((p) => (
         <ProductCard key={p.id} product={p} onAdd={onAdd} />
       ))}
