@@ -65,7 +65,8 @@ CREATE TABLE IF NOT EXISTS customers (
   address VARCHAR(200),
   credit_limit DECIMAL(12,2) DEFAULT 0,
   balance DECIMAL(12,2) DEFAULT 0,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_document_number (document_number)
 );
 
 -- Proveedores
@@ -266,7 +267,7 @@ INSERT INTO products (code, name, price, cost, stock, min_stock, category_id) VA
   ('CRA-FIL-24',  'Crayones Filgo x24', 2680, 1500, 88, 15, 4);
 
 -- Cliente consumidor final
-INSERT INTO customers (name, document_type, document_number) VALUES
+INSERT IGNORE INTO customers (name, document_type, document_number) VALUES
   ('Consumidor Final', 'DNI', '00000000');
 
 -- Configuración inicial del negocio

@@ -72,7 +72,7 @@ function PaymentModal({ customer, onClose, onSuccess }) {
               Cancelar
             </button>
             <button type="submit" disabled={loading}
-              className="flex-1 bg-blue-600 text-white rounded-lg py-2 font-medium hover:bg-blue-700 disabled:opacity-60">
+              className="flex-1 btn-primary justify-center disabled:opacity-60">
               {loading ? 'Registrando...' : 'Confirmar pago'}
             </button>
           </div>
@@ -210,8 +210,7 @@ export default function Receivables() {
         <input type="number" value={minBalance} onChange={e => setMinBalance(e.target.value)}
           placeholder="Saldo mínimo $"
           className="w-36 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <button onClick={load}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
+        <button onClick={load} className="btn-primary px-4 py-2 text-sm">
           Filtrar
         </button>
       </div>
@@ -239,7 +238,7 @@ export default function Receivables() {
                 </div>
                 <div className="flex gap-2 ml-2">
                   <button onClick={() => setPayModal(customer)}
-                    className="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-blue-700 flex items-center gap-1">
+                    className="btn-primary text-xs px-3 py-1.5 flex items-center gap-1">
                     <DollarSign size={13} /> Cobrar
                   </button>
                   <button onClick={() => setWaModal(customer)}

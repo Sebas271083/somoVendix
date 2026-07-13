@@ -5,6 +5,13 @@ import { useAuth } from '../context/AuthContext.jsx';
 import toast from 'react-hot-toast';
 
 const STATUS_LABEL = { draft: 'Borrador', sent: 'Enviado', accepted: 'Aceptado', rejected: 'Rechazado', expired: 'Vencido' };
+
+const fmtDate = (d) => {
+  if (!d) return '—';
+  const s = d instanceof Date ? d.toISOString().split('T')[0] : String(d).split('T')[0];
+  const parsed = new Date(s + 'T00:00:00');
+  return isNaN(parsed) ? '—' : parsed.toLocaleDateString('es-AR');
+};
 const STATUS_COLOR = { draft: 'bg-gray-100 text-gray-600', sent: 'bg-blue-100 text-blue-700', accepted: 'bg-green-100 text-green-700', rejected: 'bg-red-100 text-red-600', expired: 'bg-amber-100 text-amber-700' };
 
 function PrintView({ quote, settings, onClose }) {
@@ -35,7 +42,7 @@ function PrintView({ quote, settings, onClose }) {
               <p className="text-2xl font-bold text-blue-700">Presupuesto</p>
               <p className="text-gray-500 text-xs mt-1">N° {String(quote.quote_number).padStart(4, '0')}</p>
               <p className="text-gray-500 text-xs">{new Date(quote.created_at).toLocaleDateString('es-AR')}</p>
-              {quote.valid_until && <p className="text-amber-600 text-xs">Válido hasta: {new Date(quote.valid_until + 'T00:00:00').toLocaleDateString('es-AR')}</p>}
+              {quote.valid_until && <p className="text-amber-600 text-xs">Válido hasta: {fmtDate(quote.valid_until)}</p>}
             </div>
           </div>
 
@@ -339,7 +346,7 @@ export default function Quotes() {
                   <td className="px-4 py-3 text-gray-500 text-xs">{new Date(q.created_at).toLocaleDateString('es-AR')}</td>
                   <td className="px-4 py-3">{q.customer_name || '—'}</td>
                   <td className="px-4 py-3 text-gray-500">{q.user_name}</td>
-                  <td className="px-4 py-3 text-gray-500 text-xs">{q.valid_until ? new Date(q.valid_until + 'T00:00:00').toLocaleDateString('es-AR') : '—'}</td>
+                  <td className="px-4 py-3 text-gray-500 text-xs">{fmtDate(q.valid_until)}</td>
                   <td className="px-4 py-3 font-semibold text-blue-700">$ {Number(q.total).toLocaleString('es-AR')}</td>
                   <td className="px-4 py-3"><span className={`badge ${STATUS_COLOR[q.status]}`}>{STATUS_LABEL[q.status]}</span></td>
                   <td className="px-4 py-3">

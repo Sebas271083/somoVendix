@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const fmt   = (n) => `$${Number(n || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
+const fmt   = (n) => `$${Number(n || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const fmtK  = (n) => n >= 1000 ? `$${(n/1000).toFixed(1)}k` : fmt(n);
 const fmtPct = (n) => `${Number(n || 0).toFixed(1)}%`;
 const COLORS = ['#1F6E5A','#3b82f6','#10b981','#f59e0b','#f97316','#ec4899','#8b5cf6','#14b8a6'];

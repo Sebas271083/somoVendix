@@ -38,6 +38,7 @@ export const expenseController = {
 
   async summary(req, res, next) {
     try {
+      await ExpenseModel.updateOverdue(req.tenant.id);
       res.json(await ExpenseModel.getSummary(req.tenant.id));
     } catch (err) { next(err); }
   },

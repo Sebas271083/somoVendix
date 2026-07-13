@@ -284,6 +284,16 @@ export default function Settings() {
                 </label>
               </div>
 
+              {!afip.enabled && (
+                <div className="flex items-center gap-3 rounded-xl px-4 py-3 border" style={{ backgroundColor: 'var(--bg)', borderColor: 'var(--border)' }}>
+                  <FileText size={20} style={{ color: 'var(--muted)' }} />
+                  <div>
+                    <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Facturación electrónica deshabilitada</p>
+                    <p className="text-xs" style={{ color: 'var(--muted)' }}>Active el switch de arriba para configurar la conexión con AFIP y emitir facturas con CAE.</p>
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium" style={{ color: 'var(--ink)' }}>CUIT del negocio</label>

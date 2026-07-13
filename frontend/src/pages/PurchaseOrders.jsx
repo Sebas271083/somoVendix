@@ -341,8 +341,9 @@ export default function PurchaseOrders() {
         {[['', 'Todas'], ['pending', 'Pendientes'], ['received', 'Recibidas'], ['cancelled', 'Canceladas']].map(([v, l]) => (
           <button key={v} onClick={() => setStatusFilter(v)}
             className={`px-4 py-2 rounded-xl text-sm font-medium border transition-colors ${
-              statusFilter === v ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
-            }`}>
+              statusFilter === v ? 'border-transparent' : 'border-gray-200 hover:border-gray-300'
+            }`}
+            style={statusFilter === v ? { backgroundColor: 'var(--brand)', color: '#fff' } : { backgroundColor: 'var(--surface)', color: 'var(--ink)' }}>
             {l}
           </button>
         ))}

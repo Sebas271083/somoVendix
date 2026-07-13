@@ -48,8 +48,8 @@ function AccountModal({ customer, onClose }) {
   const [noteType, setNoteType] = useState('note');
 
   useEffect(() => {
-    customersApi.accountSummary(customer.id).then(setData);
-    customersApi.metrics(customer.id).then(setMetrics).catch(() => {});
+    customersApi.accountSummary(customer.id).then(setData).catch(() => setData({ sales: [], payments: [], totalPurchased: 0, totalPaid: 0 }));
+    customersApi.metrics(customer.id).then(setMetrics).catch(() => setMetrics({}));
     customersApi.interactions(customer.id).then(setInteractions).catch(() => {});
     customersApi.loyaltyHistory(customer.id).then(setLoyalty).catch(() => {});
   }, [customer.id]);
@@ -101,13 +101,13 @@ function AccountModal({ customer, onClose }) {
       <div className="rounded-xl shadow-xl w-full max-w-3xl max-h-[88vh] flex flex-col" style={{ backgroundColor: 'var(--surface)' }}>
         <div className="flex items-center justify-between p-5 border-b">
           <div>
-            <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+            <h2 className="font-semibold flex items-center gap-2" style={{ color: 'var(--ink)' }}>
               {customer.name}
               <span className={`text-xs px-2 py-0.5 rounded-full ${segmentInfo(customer.segment)?.color}`}>
                 {segmentInfo(customer.segment)?.label}
               </span>
             </h2>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm" style={{ color: 'var(--muted)' }}>
               {customer.phone} · Saldo:{' '}
               <span className={customer.balance > 0 ? 'text-red-600 font-semibold' : 'text-green-600'}>
                 {fmt(customer.balance)}
@@ -119,7 +119,7 @@ function AccountModal({ customer, onClose }) {
               )}
             </p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+          <button onClick={onClose} style={{ color: 'var(--muted)' }}><X size={20} /></button>
         </div>
 
         <div className="flex gap-1 p-3 border-b overflow-x-auto">
@@ -134,25 +134,25 @@ function AccountModal({ customer, onClose }) {
 
         <div className="flex-1 overflow-y-auto p-5">
           {tab === 'sales' && !data ? (
-            <div className="text-center py-8 text-gray-400">Cargando...</div>
+            <div className="text-center py-8" style={{ color: 'var(--muted)' }}>Cargando...</div>
           ) : tab === 'sales' ? (
             <table className="w-full text-sm">
-              <thead className="bg-gray-50">
+              <thead style={{ backgroundColor: 'var(--bg)' }}>
                 <tr>
                   {['Fecha', 'Ticket #', 'Método', 'Total', 'Estado'].map((h) => (
-                    <th key={h} className="text-left px-3 py-2 text-gray-500">{h}</th>
+                    <th key={h} className="text-left px-3 py-2" style={{ color: 'var(--muted)' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {data.sales.length === 0 ? (
-                  <tr><td colSpan={5} className="text-center py-6 text-gray-400">Sin compras registradas</td></tr>
+                  <tr><td colSpan={5} className="text-center py-6" style={{ color: 'var(--muted)' }}>Sin compras registradas</td></tr>
                 ) : data.sales.map((s) => (
-                  <tr key={s.id} className="border-t">
-                    <td className="px-3 py-2 text-gray-500">{new Date(s.created_at).toLocaleDateString('es-AR')}</td>
-                    <td className="px-3 py-2">#{s.ticket_number}</td>
-                    <td className="px-3 py-2 text-gray-500 capitalize">{s.payment_method?.replace('_', ' ')}</td>
-                    <td className="px-3 py-2 text-right font-semibold">{fmt(s.total)}</td>
+                  <tr key={s.id} className="border-t" style={{ borderColor: 'var(--border)' }}>
+                    <td className="px-3 py-2" style={{ color: 'var(--muted)' }}>{new Date(s.created_at).toLocaleDateString('es-AR')}</td>
+                    <td className="px-3 py-2" style={{ color: 'var(--ink)' }}>#{s.ticket_number}</td>
+                    <td className="px-3 py-2 capitalize" style={{ color: 'var(--muted)' }}>{s.payment_method?.replace('_', ' ')}</td>
+                    <td className="px-3 py-2 text-right font-semibold" style={{ color: 'var(--ink)' }}>{fmt(s.total)}</td>
                     <td className="px-3 py-2">
                       <span className={`text-xs px-2 py-0.5 rounded-full ${s.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                         {s.status === 'completed' ? 'Completada' : 'Cancelada'}
@@ -163,32 +163,32 @@ function AccountModal({ customer, onClose }) {
               </tbody>
             </table>
           ) : tab === 'payments' && !data ? (
-            <div className="text-center py-8 text-gray-400">Cargando...</div>
+            <div className="text-center py-8" style={{ color: 'var(--muted)' }}>Cargando...</div>
           ) : tab === 'payments' ? (
             <table className="w-full text-sm">
-              <thead className="bg-gray-50">
+              <thead style={{ backgroundColor: 'var(--bg)' }}>
                 <tr>
                   {['Fecha', 'Método', 'Notas', 'Monto'].map((h) => (
-                    <th key={h} className="text-left px-3 py-2 text-gray-500">{h}</th>
+                    <th key={h} className="text-left px-3 py-2" style={{ color: 'var(--muted)' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {data.payments.length === 0 ? (
-                  <tr><td colSpan={4} className="text-center py-6 text-gray-400">Sin pagos registrados</td></tr>
+                  <tr><td colSpan={4} className="text-center py-6" style={{ color: 'var(--muted)' }}>Sin pagos registrados</td></tr>
                 ) : data.payments.map((p) => (
-                  <tr key={p.id} className="border-t">
-                    <td className="px-3 py-2 text-gray-500">{new Date(p.created_at).toLocaleDateString('es-AR')}</td>
-                    <td className="px-3 py-2 capitalize">{p.method}</td>
-                    <td className="px-3 py-2 text-gray-500">{p.notes || '—'}</td>
-                    <td className="px-3 py-2 font-semibold text-green-700">+{fmt(p.amount)}</td>
+                  <tr key={p.id} className="border-t" style={{ borderColor: 'var(--border)' }}>
+                    <td className="px-3 py-2" style={{ color: 'var(--muted)' }}>{new Date(p.created_at).toLocaleDateString('es-AR')}</td>
+                    <td className="px-3 py-2 capitalize" style={{ color: 'var(--ink)' }}>{p.method}</td>
+                    <td className="px-3 py-2" style={{ color: 'var(--muted)' }}>{p.notes || '—'}</td>
+                    <td className="px-3 py-2 font-semibold text-green-600">+{fmt(p.amount)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           ) : tab === 'metrics' ? (
             !metrics ? (
-              <div className="text-center py-8 text-gray-400">Cargando métricas...</div>
+              <div className="text-center py-8" style={{ color: 'var(--muted)' }}>Cargando métricas...</div>
             ) : (
               <div className="grid grid-cols-2 gap-4">
                 {[
@@ -200,9 +200,9 @@ function AccountModal({ customer, onClose }) {
                   { label: 'Primera compra', value: metrics.first_purchase ? new Date(metrics.first_purchase).toLocaleDateString('es-AR') : '—' },
                   { label: 'Última compra', value: metrics.last_purchase ? new Date(metrics.last_purchase).toLocaleDateString('es-AR') : '—' },
                 ].map(({ label, value }) => (
-                  <div key={label} className="bg-gray-50 rounded-xl p-4">
-                    <p className="text-xs text-gray-500 mb-1">{label}</p>
-                    <p className="text-lg font-semibold text-gray-800">{value ?? '—'}</p>
+                  <div key={label} className="rounded-xl p-4" style={{ backgroundColor: 'var(--bg)' }}>
+                    <p className="text-xs mb-1" style={{ color: 'var(--muted)' }}>{label}</p>
+                    <p className="text-lg font-semibold" style={{ color: 'var(--ink)' }}>{value ?? '—'}</p>
                   </div>
                 ))}
               </div>
@@ -223,15 +223,15 @@ function AccountModal({ customer, onClose }) {
                 <button onClick={handleAddInteraction} className="btn-primary px-4 py-2 text-sm">Guardar</button>
               </div>
               {interactions.length === 0 ? (
-                <p className="text-center text-gray-400 py-6">Sin interacciones registradas</p>
+                <p className="text-center py-6" style={{ color: 'var(--muted)' }}>Sin interacciones registradas</p>
               ) : interactions.map((i) => (
-                <div key={i.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg group">
+                <div key={i.id} className="flex items-start gap-3 p-3 rounded-lg group" style={{ backgroundColor: 'var(--bg)' }}>
                   <div className="flex-1">
-                    <p className="text-xs text-gray-400 mb-0.5">
-                      <span className="capitalize font-medium text-gray-600">{i.type}</span>{' '}
+                    <p className="text-xs mb-0.5" style={{ color: 'var(--muted)' }}>
+                      <span className="capitalize font-medium" style={{ color: 'var(--ink)' }}>{i.type}</span>{' '}
                       · {new Date(i.created_at).toLocaleDateString('es-AR')} · {i.user_name}
                     </p>
-                    <p className="text-sm text-gray-700">{i.body}</p>
+                    <p className="text-sm" style={{ color: 'var(--ink)' }}>{i.body}</p>
                   </div>
                   <button onClick={() => handleDeleteInteraction(i.id)}
                     className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -243,12 +243,12 @@ function AccountModal({ customer, onClose }) {
           ) : tab === 'loyalty' ? (
             <div className="space-y-3">
               {loyalty.length === 0 ? (
-                <p className="text-center text-gray-400 py-6">Sin movimientos de puntos</p>
+                <p className="text-center py-6" style={{ color: 'var(--muted)' }}>Sin movimientos de puntos</p>
               ) : loyalty.map((l) => (
-                <div key={l.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div key={l.id} className="flex items-center justify-between p-3 border rounded-lg" style={{ borderColor: 'var(--border)' }}>
                   <div>
-                    <p className="text-sm font-medium text-gray-800">{l.notes || l.type}</p>
-                    <p className="text-xs text-gray-400">{new Date(l.created_at).toLocaleDateString('es-AR')}</p>
+                    <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>{l.notes || l.type}</p>
+                    <p className="text-xs" style={{ color: 'var(--muted)' }}>{new Date(l.created_at).toLocaleDateString('es-AR')}</p>
                   </div>
                   <span className={`font-semibold ${l.points > 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {l.points > 0 ? '+' : ''}{l.points} pts
@@ -259,7 +259,8 @@ function AccountModal({ customer, onClose }) {
           ) : (
             <div>
               <textarea readOnly rows={14}
-                className="w-full border rounded-lg p-3 text-sm font-mono bg-gray-50 resize-none"
+                className="w-full border rounded-lg p-3 text-sm font-mono resize-none"
+                style={{ backgroundColor: 'var(--bg)', color: 'var(--ink)', borderColor: 'var(--border)' }}
                 value={buildWhatsApp()} />
               <button onClick={() => { navigator.clipboard.writeText(buildWhatsApp()); toast.success('Copiado'); }}
                 className="mt-3 w-full bg-green-600 text-white rounded-lg py-2 font-medium hover:bg-green-700 flex items-center justify-center gap-2">

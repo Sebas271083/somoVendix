@@ -384,7 +384,7 @@ export default function Expenses() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-medium text-gray-900 truncate">{expense.description}</p>
-                    {expense.is_recurring && (
+                    {!!expense.is_recurring && (
                       <span className="text-xs bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full flex items-center gap-1">
                         <RefreshCw size={10} /> {PERIODS[expense.recurrence_period] || 'Recurrente'}
                       </span>
