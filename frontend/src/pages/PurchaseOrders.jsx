@@ -201,6 +201,25 @@ function POForm({ onClose, onSaved }) {
 
 // ── Vista detalle OC ───────────────────────────────────────────────
 function PODetail({ po, onClose, onReceive, onCancel }) {
+  const [loadingReceive, setLoadingReceive] = useState(false);
+  const [loadingCancel, setLoadingCancel] = useState(false);
+
+  const handleReceiveClick = async () => {
+    if (!confirm('¿Marcar esta OC como recibida? Se actualizará el stock de los productos.')) return;
+    setLoadingReceive(true);
+    try { await onReceive(po.id); }
+    catch (err) { toast.error(err?.error || 'Error al recibir la OC'); }
+    finally { setLoadingReceive(false); }
+  };
+
+  const handleCancelClick = async () => {
+    if (!confirm('¿Cancelar esta orden de compra?')) return;
+    setLoadingCancel(true);
+    try { await onCancel(po.id); }
+    catch (err) { toast.error(err?.error || 'Error al cancelar la OC'); }
+    finally { setLoadingCancel(false); }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
@@ -269,11 +288,13 @@ function PODetail({ po, onClose, onReceive, onCancel }) {
 
         {po.status === 'pending' && (
           <div className="flex gap-3 p-5 border-t flex-shrink-0">
-            <button onClick={() => onCancel(po.id)} className="btn-secondary flex-1 text-red-600 hover:bg-red-50">
-              <XCircle size={15} /> Cancelar OC
+            <button onClick={handleCancelClick} disabled={loadingCancel || loadingReceive}
+              className="btn-secondary flex-1 text-red-600 hover:bg-red-50 disabled:opacity-50">
+              <XCircle size={15} /> {loadingCancel ? 'Cancelando...' : 'Cancelar OC'}
             </button>
-            <button onClick={() => onReceive(po.id)} className="flex-1 btn bg-green-600 text-white hover:bg-green-700 focus:ring-green-400 justify-center">
-              <CheckCircle size={15} /> Marcar recibida
+            <button onClick={handleReceiveClick} disabled={loadingReceive || loadingCancel}
+              className="flex-1 btn bg-green-600 text-white hover:bg-green-700 focus:ring-green-400 justify-center disabled:opacity-50">
+              <CheckCircle size={15} /> {loadingReceive ? 'Procesando...' : 'Marcar recibida'}
             </button>
           </div>
         )}
@@ -302,21 +323,17 @@ export default function PurchaseOrders() {
   useEffect(() => { load(); }, [statusFilter]);
 
   const handleReceive = async (id) => {
-    try {
-      await purchaseOrdersApi.receive(id);
-      toast.success('OC recibida — stock actualizado');
-      setDetail(null);
-      load();
-    } catch (err) { toast.error(err?.error || 'Error al recibir la OC'); }
+    await purchaseOrdersApi.receive(id);
+    toast.success('OC recibida — stock actualizado');
+    setDetail(null);
+    load();
   };
 
   const handleCancel = async (id) => {
-    try {
-      await purchaseOrdersApi.cancel(id);
-      toast.success('OC cancelada');
-      setDetail(null);
-      load();
-    } catch (err) { toast.error(err?.error || 'Error al cancelar la OC'); }
+    await purchaseOrdersApi.cancel(id);
+    toast.success('OC cancelada');
+    setDetail(null);
+    load();
   };
 
   const openDetail = async (id) => {
