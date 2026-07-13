@@ -201,101 +201,122 @@ function POForm({ onClose, onSaved }) {
 
 // ── Vista detalle OC ───────────────────────────────────────────────
 function PODetail({ po, onClose, onReceive, onCancel }) {
-  const [loadingReceive, setLoadingReceive] = useState(false);
-  const [loadingCancel, setLoadingCancel] = useState(false);
+  const [confirming, setConfirming] = useState(null); // 'receive' | 'cancel' | null
+  const [loading, setLoading] = useState(false);
 
-  const handleReceiveClick = async () => {
-    if (!confirm('¿Marcar esta OC como recibida? Se actualizará el stock de los productos.')) return;
-    setLoadingReceive(true);
-    try { await onReceive(po.id); }
-    catch (err) { toast.error(err?.error || 'Error al recibir la OC'); }
-    finally { setLoadingReceive(false); }
-  };
-
-  const handleCancelClick = async () => {
-    if (!confirm('¿Cancelar esta orden de compra?')) return;
-    setLoadingCancel(true);
-    try { await onCancel(po.id); }
-    catch (err) { toast.error(err?.error || 'Error al cancelar la OC'); }
-    finally { setLoadingCancel(false); }
+  const execute = async (action) => {
+    setLoading(true);
+    try {
+      if (action === 'receive') await onReceive(po.id);
+      else await onCancel(po.id);
+    } catch (err) {
+      toast.error(err?.error || (action === 'receive' ? 'Error al recibir la OC' : 'Error al cancelar la OC'));
+      setConfirming(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
-        <div className="flex items-center justify-between p-5 border-b flex-shrink-0">
+      <div className="rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]" style={{ backgroundColor: 'var(--surface)' }}>
+        <div className="flex items-center justify-between p-5 border-b flex-shrink-0" style={{ borderColor: 'var(--border)' }}>
           <div>
-            <h2 className="text-lg font-semibold">OC #{po.id}</h2>
+            <h2 className="text-lg font-semibold" style={{ color: 'var(--ink)' }}>OC #{po.id}</h2>
             <div className="flex items-center gap-2 mt-1">
               <StatusBadge status={po.status} />
-              {po.supplier_name && <span className="text-sm text-gray-500">{po.supplier_name}</span>}
+              {po.supplier_name && <span className="text-sm" style={{ color: 'var(--muted)' }}>{po.supplier_name}</span>}
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+          <button onClick={onClose} style={{ color: 'var(--muted)' }}><X size={20} /></button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
-          <div className="bg-gray-50 rounded-xl p-3 text-sm grid grid-cols-2 gap-x-4 gap-y-1">
-            <span className="text-gray-500">Fecha creación</span>
-            <span className="text-right">{new Date(po.created_at).toLocaleDateString('es-AR')}</span>
+          <div className="rounded-xl p-3 text-sm grid grid-cols-2 gap-x-4 gap-y-1" style={{ backgroundColor: 'var(--bg)' }}>
+            <span style={{ color: 'var(--muted)' }}>Fecha creación</span>
+            <span className="text-right" style={{ color: 'var(--ink)' }}>{new Date(po.created_at).toLocaleDateString('es-AR')}</span>
             {po.expected_date && <>
-              <span className="text-gray-500">Fecha esperada</span>
-              <span className="text-right">{new Date(po.expected_date).toLocaleDateString('es-AR')}</span>
+              <span style={{ color: 'var(--muted)' }}>Fecha esperada</span>
+              <span className="text-right" style={{ color: 'var(--ink)' }}>{new Date(po.expected_date).toLocaleDateString('es-AR')}</span>
             </>}
             {po.received_at && <>
-              <span className="text-gray-500">Recibida</span>
-              <span className="text-right">{new Date(po.received_at).toLocaleDateString('es-AR')}</span>
+              <span style={{ color: 'var(--muted)' }}>Recibida</span>
+              <span className="text-right" style={{ color: 'var(--ink)' }}>{new Date(po.received_at).toLocaleDateString('es-AR')}</span>
             </>}
-            <span className="text-gray-500">Creada por</span>
-            <span className="text-right">{po.user_name}</span>
+            <span style={{ color: 'var(--muted)' }}>Creada por</span>
+            <span className="text-right" style={{ color: 'var(--ink)' }}>{po.user_name}</span>
           </div>
 
           <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">Productos</p>
-            <div className="border border-gray-200 rounded-xl overflow-hidden">
+            <p className="text-sm font-medium mb-2" style={{ color: 'var(--ink)' }}>Productos</p>
+            <div className="border rounded-xl overflow-hidden" style={{ borderColor: 'var(--border)' }}>
               <table className="w-full text-sm">
-                <thead className="bg-gray-50">
+                <thead style={{ backgroundColor: 'var(--bg)' }}>
                   <tr>
-                    <th className="text-left px-3 py-2 text-gray-500">Producto</th>
-                    <th className="text-center px-3 py-2 text-gray-500">Cant.</th>
-                    <th className="text-right px-3 py-2 text-gray-500">Costo</th>
-                    <th className="text-right px-3 py-2 text-gray-500">Subtotal</th>
+                    <th className="text-left px-3 py-2" style={{ color: 'var(--muted)' }}>Producto</th>
+                    <th className="text-center px-3 py-2" style={{ color: 'var(--muted)' }}>Cant.</th>
+                    <th className="text-right px-3 py-2" style={{ color: 'var(--muted)' }}>Costo</th>
+                    <th className="text-right px-3 py-2" style={{ color: 'var(--muted)' }}>Subtotal</th>
                   </tr>
                 </thead>
                 <tbody>
                   {(po.items || []).map((item) => (
-                    <tr key={item.id} className="border-t">
-                      <td className="px-3 py-2 font-medium text-gray-800">{item.product_name}
-                        <p className="text-xs text-gray-400">Stock actual: {item.current_stock}</p>
+                    <tr key={item.id} className="border-t" style={{ borderColor: 'var(--border)' }}>
+                      <td className="px-3 py-2 font-medium" style={{ color: 'var(--ink)' }}>{item.product_name}
+                        <p className="text-xs" style={{ color: 'var(--muted)' }}>Stock actual: {item.current_stock}</p>
                       </td>
-                      <td className="px-3 py-2 text-center">{item.quantity}</td>
-                      <td className="px-3 py-2 text-right">{fmt(item.unit_cost)}</td>
-                      <td className="px-3 py-2 text-right font-semibold">{fmt(item.subtotal)}</td>
+                      <td className="px-3 py-2 text-center" style={{ color: 'var(--ink)' }}>{item.quantity}</td>
+                      <td className="px-3 py-2 text-right" style={{ color: 'var(--ink)' }}>{fmt(item.unit_cost)}</td>
+                      <td className="px-3 py-2 text-right font-semibold" style={{ color: 'var(--ink)' }}>{fmt(item.subtotal)}</td>
                     </tr>
                   ))}
                 </tbody>
-                <tfoot className="bg-gray-50 border-t">
+                <tfoot className="border-t" style={{ backgroundColor: 'var(--bg)', borderColor: 'var(--border)' }}>
                   <tr>
-                    <td colSpan={3} className="px-3 py-2 text-right font-semibold">Total</td>
-                    <td className="px-3 py-2 text-right font-bold">{fmt(po.total)}</td>
+                    <td colSpan={3} className="px-3 py-2 text-right font-semibold" style={{ color: 'var(--ink)' }}>Total</td>
+                    <td className="px-3 py-2 text-right font-bold" style={{ color: 'var(--ink)' }}>{fmt(po.total)}</td>
                   </tr>
                 </tfoot>
               </table>
             </div>
           </div>
-          {po.notes && <p className="text-sm text-gray-500 italic">{po.notes}</p>}
+          {po.notes && <p className="text-sm italic" style={{ color: 'var(--muted)' }}>{po.notes}</p>}
         </div>
 
         {po.status === 'pending' && (
-          <div className="flex gap-3 p-5 border-t flex-shrink-0">
-            <button onClick={handleCancelClick} disabled={loadingCancel || loadingReceive}
-              className="btn-secondary flex-1 text-red-600 hover:bg-red-50 disabled:opacity-50">
-              <XCircle size={15} /> {loadingCancel ? 'Cancelando...' : 'Cancelar OC'}
-            </button>
-            <button onClick={handleReceiveClick} disabled={loadingReceive || loadingCancel}
-              className="flex-1 btn bg-green-600 text-white hover:bg-green-700 focus:ring-green-400 justify-center disabled:opacity-50">
-              <CheckCircle size={15} /> {loadingReceive ? 'Procesando...' : 'Marcar recibida'}
-            </button>
+          <div className="p-5 border-t flex-shrink-0" style={{ borderColor: 'var(--border)' }}>
+            {confirming ? (
+              <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: 'var(--bg)' }}>
+                <p className="text-sm font-medium text-center" style={{ color: 'var(--ink)' }}>
+                  {confirming === 'receive'
+                    ? '¿Confirmar recepción? Se actualizará el stock.'
+                    : '¿Cancelar esta orden de compra?'}
+                </p>
+                <div className="flex gap-2">
+                  <button onClick={() => setConfirming(null)} disabled={loading}
+                    className="btn-secondary flex-1 justify-center disabled:opacity-50">
+                    Volver
+                  </button>
+                  <button onClick={() => execute(confirming)} disabled={loading}
+                    className={`flex-1 btn justify-center disabled:opacity-50 text-white ${confirming === 'receive' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-500 hover:bg-red-600'}`}>
+                    {loading
+                      ? (confirming === 'receive' ? 'Procesando...' : 'Cancelando...')
+                      : (confirming === 'receive' ? 'Sí, confirmar' : 'Sí, cancelar')}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex gap-3">
+                <button onClick={() => setConfirming('cancel')}
+                  className="btn-secondary flex-1 text-red-600 hover:bg-red-50">
+                  <XCircle size={15} /> Cancelar OC
+                </button>
+                <button onClick={() => setConfirming('receive')}
+                  className="flex-1 btn bg-green-600 text-white hover:bg-green-700 focus:ring-green-400 justify-center">
+                  <CheckCircle size={15} /> Marcar recibida
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
