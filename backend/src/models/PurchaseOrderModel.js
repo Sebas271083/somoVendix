@@ -100,7 +100,7 @@ export const PurchaseOrderModel = {
           [item.product_id, item.quantity, before, after, id, `OC #${id} recibida`, user_id]
         );
 
-        // Crear lote para FIFO
+        // Crear lote para FIFO (usando la misma conn para evitar lock conflict por FK)
         await StockLotModel.create({
           tenant_id: po.tenant_id,
           product_id: item.product_id,
@@ -108,7 +108,7 @@ export const PurchaseOrderModel = {
           quantity: item.quantity,
           unit_cost: item.unit_cost,
           purchase_order_id: id,
-        });
+        }, conn);
       }
 
       await conn.commit();

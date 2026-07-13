@@ -1,10 +1,13 @@
 import { query } from '../config/database.js';
 
 export const StockLotModel = {
-  // Crear lote al recibir mercadería
-  async create({ tenant_id, product_id, variant_id = null, quantity, unit_cost, purchase_order_id = null }) {
+  // Crear lote al recibir mercadería. Acepta una conexión de transacción (conn) para evitar lock conflicts.
+  async create({ tenant_id, product_id, variant_id = null, quantity, unit_cost, purchase_order_id = null }, conn = null) {
     if (quantity <= 0) return;
-    await query(
+    const execute = conn
+      ? (sql, params) => conn.execute(sql, params)
+      : (sql, params) => query(sql, params);
+    await execute(
       `INSERT INTO stock_lots (tenant_id, product_id, variant_id, quantity_initial, quantity_remaining, unit_cost, purchase_order_id)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [tenant_id, product_id, variant_id, quantity, quantity, unit_cost, purchase_order_id]
