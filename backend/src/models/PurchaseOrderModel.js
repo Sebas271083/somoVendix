@@ -1,5 +1,4 @@
 import { query, getConnection } from '../config/database.js';
-import { StockLotModel } from './StockLotModel.js';
 
 export const PurchaseOrderModel = {
   async findAll({ tenant_id, status } = {}) {
@@ -100,15 +99,14 @@ export const PurchaseOrderModel = {
           [item.product_id, item.quantity, before, after, id, `OC #${id} recibida`, user_id]
         );
 
-        // Crear lote para FIFO (usando la misma conn para evitar lock conflict por FK)
-        await StockLotModel.create({
-          tenant_id: po.tenant_id,
-          product_id: item.product_id,
-          variant_id: null,
-          quantity: item.quantity,
-          unit_cost: item.unit_cost,
-          purchase_order_id: id,
-        }, conn);
+        // Lote FIFO — usa conn para estar dentro de la transacción y evitar lock conflict por FK
+        if (item.quantity > 0) {
+          await conn.execute(
+            `INSERT INTO stock_lots (tenant_id, product_id, variant_id, quantity_initial, quantity_remaining, unit_cost, purchase_order_id)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [po.tenant_id, item.product_id, null, item.quantity, item.quantity, item.unit_cost, id]
+          );
+        }
       }
 
       await conn.commit();
