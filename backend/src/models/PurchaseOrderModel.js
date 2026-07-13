@@ -96,7 +96,7 @@ export const PurchaseOrderModel = {
         await conn.execute(
           `INSERT INTO stock_movements
              (product_id, type, quantity, before_stock, after_stock, reference_id, notes, user_id)
-           VALUES (?, 'purchase', ?, ?, ?, ?, ?, ?)`,
+           VALUES (?, 'restock', ?, ?, ?, ?, ?, ?)`,
           [item.product_id, item.quantity, before, after, id, `OC #${id} recibida`, user_id]
         );
 
