@@ -49,3 +49,14 @@ CREATE TABLE IF NOT EXISTS purchase_order_items (
   FOREIGN KEY (purchase_order_id) REFERENCES purchase_orders(id) ON DELETE CASCADE,
   FOREIGN KEY (product_id)        REFERENCES products(id)
 );
+
+-- Fix: eliminar ubicaciones "Principal" duplicadas que se crearon sin UNIQUE constraint
+DELETE FROM location_stock WHERE location_id NOT IN (
+  SELECT min_id FROM (SELECT MIN(id) AS min_id FROM locations GROUP BY tenant_id, name) t
+);
+DELETE FROM locations WHERE id NOT IN (
+  SELECT min_id FROM (SELECT MIN(id) AS min_id FROM locations GROUP BY tenant_id, name) t
+);
+
+-- Agregar constraint para que INSERT IGNORE funcione correctamente de ahora en más
+ALTER TABLE locations ADD UNIQUE KEY uq_tenant_location_name (tenant_id, name);

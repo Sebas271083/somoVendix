@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS locations (
   is_default TINYINT(1) DEFAULT 0,
   active TINYINT(1) DEFAULT 1,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_tenant_location_name (tenant_id, name),
   FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
 );
 
