@@ -11,13 +11,16 @@ function SessionDetail({ sessionId, onBack, onClosed }) {
   const { isAdmin } = useAuth();
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
   const [closing, setClosing] = useState(false);
   const [confirmClose, setConfirmClose] = useState(false);
 
   const load = async () => {
     setLoading(true);
+    setError(null);
     try { setSession(await stocktakeApi.get(sessionId)); }
+    catch (err) { setError(err?.error || err?.message || 'Error al cargar la sesión'); }
     finally { setLoading(false); }
   };
 
@@ -56,7 +59,17 @@ function SessionDetail({ sessionId, onBack, onClosed }) {
   const counted = session?.items.filter(i => i.counted_qty !== null).length ?? 0;
   const total = session?.items.length ?? 0;
 
-  if (loading) return <div className="p-8 text-center text-gray-400">Cargando sesión...</div>;
+  if (loading) return <div className="p-8 text-center" style={{ color: 'var(--muted)' }}>Cargando sesión...</div>;
+  if (error) return (
+    <div className="p-8 text-center space-y-3">
+      <p className="text-red-500 font-medium">No se pudo cargar la sesión</p>
+      <p className="text-sm" style={{ color: 'var(--muted)' }}>{error}</p>
+      <div className="flex gap-2 justify-center">
+        <button onClick={load} className="btn-primary px-4 py-2 text-sm">Reintentar</button>
+        <button onClick={onBack} className="btn-secondary px-4 py-2 text-sm">Volver</button>
+      </div>
+    </div>
+  );
   if (!session) return null;
 
   return (

@@ -31,11 +31,14 @@ export const StocktakeModel = {
 
     session.items = await query(
       `SELECT si.*, p.name AS product_name, p.code,
-              pv.label AS variant_label,
+              (SELECT GROUP_CONCAT(pav.value ORDER BY pa.position SEPARATOR ' / ')
+               FROM variant_attribute_values vav
+               JOIN product_attribute_values pav ON vav.attribute_value_id = pav.id
+               JOIN product_attributes pa ON pav.attribute_id = pa.id
+               WHERE vav.variant_id = si.variant_id) AS variant_label,
               (si.counted_qty - si.expected_qty) AS difference
        FROM stocktake_items si
        JOIN products p ON si.product_id = p.id
-       LEFT JOIN product_variants pv ON si.variant_id = pv.id
        WHERE si.session_id = ?
        ORDER BY p.name`,
       [id]

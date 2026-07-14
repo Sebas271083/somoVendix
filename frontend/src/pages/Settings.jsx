@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { settingsApi, billingApi, afipApi } from '../services/api';
+import { settingsApi, billingApi, afipApi, categoriesApi } from '../services/api';
 import { useAuth } from '../context/AuthContext.jsx';
-import { Save, Store, Receipt, CreditCard, Zap, CheckCircle, Loader2, Package, FileText, Wifi } from 'lucide-react';
+import { Save, Store, Receipt, CreditCard, Zap, CheckCircle, Loader2, Package, FileText, Wifi, Tag, Plus, Pencil, Trash2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const SECTIONS = [
@@ -9,9 +9,20 @@ const SECTIONS = [
   { id: 'receipts', label: 'Recibos', icon: Receipt },
   { id: 'payments', label: 'Pagos y moneda', icon: CreditCard },
   { id: 'inventory', label: 'Inventario', icon: Package },
+  { id: 'categories', label: 'Categorías', icon: Tag },
   { id: 'afip', label: 'AFIP', icon: FileText },
   { id: 'plan', label: 'Mi plan', icon: Zap },
 ];
+
+const PRESET_COLORS = [
+  '#6366f1','#3b82f6','#10b981','#f59e0b',
+  '#f97316','#ec4899','#8b5cf6','#14b8a6',
+  '#ef4444','#84cc16','#06b6d4','#a855f7',
+];
+
+const toSlug = (str) =>
+  str.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
 const planLabels = { free: 'Gratis', pro: 'Pro', business: 'Business' };
 const planColors = { free: 'bg-gray-100 text-gray-700', pro: 'bg-brand-soft text-brand', business: 'bg-purple-100 text-purple-700' };
@@ -33,6 +44,12 @@ export default function Settings() {
   const [plans, setPlans] = useState([]);
   const [checkingOut, setCheckingOut] = useState(null);
 
+  // Categorías state
+  const [categories, setCategories] = useState([]);
+  const [catNew, setCatNew] = useState({ name: '', color: '#6366f1' });
+  const [catEditing, setCatEditing] = useState(null); // { id, name, color }
+  const [catSaving, setCatSaving] = useState(false);
+
   // AFIP state
   const [afip, setAfip] = useState({
     cuit: '', punto_venta: 1, iva_condition: 'responsable_inscripto',
@@ -53,6 +70,9 @@ export default function Settings() {
     }
     if (activeSection === 'afip') {
       afipApi.getSettings().then(s => setAfip(prev => ({ ...prev, ...s, cert_pem: '', key_pem: '' }))).catch(() => {});
+    }
+    if (activeSection === 'categories') {
+      categoriesApi.list().then(setCategories).catch(() => {});
     }
   }, [activeSection]);
 
@@ -76,6 +96,38 @@ export default function Settings() {
       toast.success('Configuración guardada');
     } catch (err) { toast.error(err?.error || 'Error al guardar'); }
     finally { setSaving(false); }
+  };
+
+  const handleCatCreate = async () => {
+    if (!catNew.name.trim()) return;
+    setCatSaving(true);
+    try {
+      const created = await categoriesApi.create({ name: catNew.name.trim(), slug: toSlug(catNew.name), color: catNew.color });
+      setCategories(prev => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
+      setCatNew({ name: '', color: '#6366f1' });
+      toast.success('Categoría creada');
+    } catch (err) { toast.error(err?.error || 'Error al crear'); }
+    finally { setCatSaving(false); }
+  };
+
+  const handleCatUpdate = async () => {
+    if (!catEditing?.name.trim()) return;
+    setCatSaving(true);
+    try {
+      await categoriesApi.update(catEditing.id, { name: catEditing.name.trim(), slug: toSlug(catEditing.name), color: catEditing.color });
+      setCategories(prev => prev.map(c => c.id === catEditing.id ? { ...c, ...catEditing, name: catEditing.name.trim() } : c));
+      setCatEditing(null);
+      toast.success('Categoría actualizada');
+    } catch (err) { toast.error(err?.error || 'Error al actualizar'); }
+    finally { setCatSaving(false); }
+  };
+
+  const handleCatDelete = async (id) => {
+    try {
+      await categoriesApi.delete(id);
+      setCategories(prev => prev.filter(c => c.id !== id));
+      toast.success('Categoría eliminada');
+    } catch (err) { toast.error(err?.error || 'No se puede eliminar — tiene productos asociados'); }
   };
 
   const handleAfipSave = async () => {
@@ -112,7 +164,7 @@ export default function Settings() {
           <h1 className="text-2xl font-bold" style={{ color: 'var(--ink)' }}>Configuración</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>Datos del negocio y preferencias del sistema</p>
         </div>
-        {activeSection !== 'plan' && activeSection !== 'afip' && (
+        {activeSection !== 'plan' && activeSection !== 'afip' && activeSection !== 'categories' && (
           <button onClick={handleSave} disabled={saving} className="btn-primary flex items-center gap-2">
             <Save size={16} /> {saving ? 'Guardando...' : 'Guardar cambios'}
           </button>
@@ -263,6 +315,89 @@ export default function Settings() {
                 <p className="text-xs mt-1.5" style={{ color: 'var(--muted)' }}>
                   Valor inicial de stock mínimo al crear un producto nuevo.
                 </p>
+              </div>
+            </div>
+          )}
+
+          {activeSection === 'categories' && (
+            <div className="space-y-5">
+              <div className="border-b pb-3" style={{ borderColor: 'var(--border)' }}>
+                <h2 className="font-semibold" style={{ color: 'var(--ink)' }}>Categorías de productos</h2>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--muted)' }}>Organizá tus productos por categoría. Se usan en el POS y en los reportes.</p>
+              </div>
+
+              {/* Nueva categoría */}
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1 flex-wrap">
+                  {PRESET_COLORS.map(c => (
+                    <button key={c} onClick={() => setCatNew(p => ({ ...p, color: c }))}
+                      className="w-6 h-6 rounded-full border-2 transition-transform hover:scale-110"
+                      style={{ backgroundColor: c, borderColor: catNew.color === c ? 'var(--ink)' : 'transparent' }} />
+                  ))}
+                </div>
+                <input
+                  value={catNew.name}
+                  onChange={e => setCatNew(p => ({ ...p, name: e.target.value }))}
+                  onKeyDown={e => e.key === 'Enter' && handleCatCreate()}
+                  placeholder="Nueva categoría..."
+                  className="input flex-1"
+                />
+                <button onClick={handleCatCreate} disabled={catSaving || !catNew.name.trim()}
+                  className="btn-primary px-4 disabled:opacity-50 flex items-center gap-1">
+                  <Plus size={15} /> Agregar
+                </button>
+              </div>
+
+              {/* Lista */}
+              <div className="space-y-2">
+                {categories.length === 0 && (
+                  <p className="text-center py-8 text-sm" style={{ color: 'var(--muted)' }}>No hay categorías. Agregá una arriba.</p>
+                )}
+                {categories.map(cat => (
+                  <div key={cat.id} className="flex items-center gap-3 p-3 rounded-xl border" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg)' }}>
+                    {catEditing?.id === cat.id ? (
+                      <>
+                        <div className="flex gap-1 flex-wrap">
+                          {PRESET_COLORS.map(c => (
+                            <button key={c} onClick={() => setCatEditing(p => ({ ...p, color: c }))}
+                              className="w-5 h-5 rounded-full border-2 transition-transform hover:scale-110"
+                              style={{ backgroundColor: c, borderColor: catEditing.color === c ? 'var(--ink)' : 'transparent' }} />
+                          ))}
+                        </div>
+                        <input
+                          value={catEditing.name}
+                          onChange={e => setCatEditing(p => ({ ...p, name: e.target.value }))}
+                          onKeyDown={e => { if (e.key === 'Enter') handleCatUpdate(); if (e.key === 'Escape') setCatEditing(null); }}
+                          className="input flex-1 py-1"
+                          autoFocus
+                        />
+                        <button onClick={handleCatUpdate} disabled={catSaving}
+                          className="btn-primary px-3 py-1 text-sm disabled:opacity-50">
+                          {catSaving ? '...' : 'Guardar'}
+                        </button>
+                        <button onClick={() => setCatEditing(null)} className="p-1 rounded" style={{ color: 'var(--muted)' }}>
+                          <X size={15} />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
+                        <span className="flex-1 text-sm font-medium" style={{ color: 'var(--ink)' }}>{cat.name}</span>
+                        <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: cat.color + '22', color: cat.color }}>
+                          {cat.product_count ?? ''} {cat.product_count === 1 ? 'producto' : 'productos'}
+                        </span>
+                        <button onClick={() => setCatEditing({ id: cat.id, name: cat.name, color: cat.color })}
+                          className="p-1 rounded hover:bg-gray-100 transition-colors" style={{ color: 'var(--muted)' }}>
+                          <Pencil size={14} />
+                        </button>
+                        <button onClick={() => handleCatDelete(cat.id)}
+                          className="p-1 rounded hover:bg-red-50 transition-colors text-red-400 hover:text-red-600">
+                          <Trash2 size={14} />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           )}
