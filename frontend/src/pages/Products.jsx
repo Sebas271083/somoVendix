@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Plus, Search, Edit2, ToggleLeft, ToggleRight, History, FileSpreadsheet, X, Image, TrendingUp, Layers, Copy } from 'lucide-react';
-import { productsApi, categoriesApi, suppliersApi } from '../services/api.js';
+import { productsApi, categoriesApi, suppliersApi, imgUrl } from '../services/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import VariantEditor from '../components/products/VariantEditor.jsx';
 import toast from 'react-hot-toast';
@@ -343,7 +343,7 @@ export default function Products() {
     const clean = Object.fromEntries(Object.entries(p).map(([k, v]) => [k, v ?? '']));
     setForm({ ...EMPTY, ...clean });
     setImageFile(null);
-    setImagePreview(p.image_url || '');
+    setImagePreview(imgUrl(p.image_url) || '');
     setShowForm(true);
   };
 
@@ -352,7 +352,7 @@ export default function Products() {
     const clean = Object.fromEntries(Object.entries(p).map(([k, v]) => [k, v ?? '']));
     setForm({ ...EMPTY, ...clean, code: '', name: `Copia de ${p.name}`, stock: 0 });
     setImageFile(null);
-    setImagePreview(p.image_url || '');
+    setImagePreview(imgUrl(p.image_url) || '');
     setShowForm(true);
   };
 
@@ -521,7 +521,7 @@ export default function Products() {
                     {/* Imagen / placeholder con color de categoría */}
                     <td data-label="" className="px-3 py-2">
                       {p.image_url
-                        ? <img src={p.image_url} alt="" className="w-8 h-8 rounded object-cover" />
+                        ? <img src={imgUrl(p.image_url)} alt="" className="w-8 h-8 rounded object-cover" />
                         : (
                           <div
                             className="w-8 h-8 rounded flex items-center justify-center"

@@ -28,6 +28,17 @@ const API_BASE = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api`
   : '/api';
 
+// Convierte rutas relativas de uploads (/uploads/...) a URL absoluta del backend.
+// Necesario cuando frontend y backend están en dominios distintos.
+const STATIC_BASE = import.meta.env.VITE_API_URL
+  ? import.meta.env.VITE_API_URL.replace(/\/$/, '')
+  : '';
+export const imgUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith('http')) return path;
+  return `${STATIC_BASE}${path}`;
+};
+
 const api = axios.create({ baseURL: API_BASE });
 
 api.interceptors.request.use((config) => {

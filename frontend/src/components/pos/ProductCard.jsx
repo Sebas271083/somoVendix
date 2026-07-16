@@ -1,5 +1,6 @@
 import { Plus, Layers, BookOpen, Pen, FileText, Pencil, Folder, Palette, ShoppingBag, Paperclip, Package, GraduationCap } from 'lucide-react';
 import { useCart } from '../../context/CartContext.jsx';
+import { imgUrl } from '../../services/api.js';
 
 const CATEGORY_MAP = {
   cuadernos:  { Icon: BookOpen,       color: '#1F6E5A' },
@@ -44,7 +45,7 @@ export default function ProductCard({ product, onAdd }) {
         >
           {product.image_url ? (
             <img
-              src={product.image_url}
+              src={imgUrl(product.image_url)}
               alt=""
               className="w-11 h-11 object-cover"
               onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement.innerHTML = ''; }}
