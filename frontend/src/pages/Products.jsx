@@ -296,6 +296,7 @@ export default function Products() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [priceHistoryProduct, setPriceHistoryProduct] = useState(null);
   const [variantProduct, setVariantProduct] = useState(null);
   const [showCSV, setShowCSV] = useState(false);
@@ -365,6 +366,7 @@ export default function Products() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSaving(true);
     try {
       let savedId = editing?.id;
       if (editing) {
@@ -385,6 +387,8 @@ export default function Products() {
       load();
     } catch (err) {
       toast.error(err?.error || 'Error al guardar');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -698,8 +702,16 @@ export default function Products() {
               )}
 
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowForm(false)} className="btn-secondary flex-1 justify-center">Cancelar</button>
-                <button type="submit" className="btn-primary flex-1 justify-center">Guardar</button>
+                <button type="button" onClick={() => setShowForm(false)} disabled={saving} className="btn-secondary flex-1 justify-center disabled:opacity-50">Cancelar</button>
+                <button type="submit" disabled={saving} className="btn-primary flex-1 justify-center disabled:opacity-50 gap-2">
+                  {saving && (
+                    <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                  )}
+                  {saving ? 'Guardando…' : 'Guardar'}
+                </button>
               </div>
             </form>
           </div>
