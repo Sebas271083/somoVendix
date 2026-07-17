@@ -8,7 +8,7 @@ import { authenticate, requireAdmin } from '../middleware/authMiddleware.js';
 import { checkProductLimit } from '../middleware/planLimitsMiddleware.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const UPLOADS_DIR = path.join(__dirname, '../public/uploads/products');
+const UPLOADS_DIR = path.join(__dirname, '../../public/uploads/products');
 fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
 const storage = multer.diskStorage({
