@@ -225,8 +225,7 @@ function CSVImportModal({ onClose, onImported }) {
                   <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-500"
-                      style={{ backgroundColor: 'var(--brand)' }}
-                      style={{ width: `${progress}%` }}
+                      style={{ backgroundColor: 'var(--brand)', width: `${progress}%` }}
                     />
                   </div>
                 </div>
