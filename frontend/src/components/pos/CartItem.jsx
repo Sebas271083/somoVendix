@@ -61,7 +61,25 @@ export default function CartItem({ item }) {
           >
             <Minus size={10} />
           </button>
-          <span className="w-7 text-center text-sm font-bold" style={{ color: 'var(--ink)' }}>{item.quantity}</span>
+          <input
+            type="number"
+            min="1"
+            value={item.quantity}
+            onChange={e => {
+              const v = parseInt(e.target.value);
+              if (!isNaN(v) && v >= 1) updateQuantity(item.cartKey, v);
+            }}
+            onFocus={e => { e.target.select(); e.target.style.borderColor = 'var(--brand)'; }}
+            onBlur={e => { e.target.style.borderColor = 'var(--border)'; }}
+            className="w-9 text-center text-sm font-bold rounded-lg transition-colors"
+            style={{
+              color: 'var(--ink)',
+              backgroundColor: 'transparent',
+              border: '1px solid var(--border)',
+              outline: 'none',
+              padding: '1px 2px',
+            }}
+          />
           <button
             onClick={() => updateQuantity(item.cartKey, item.quantity + 1)}
             className="w-6 h-6 rounded-lg border flex items-center justify-center transition-colors"

@@ -216,13 +216,17 @@ export default function Cart({ className = '' }) {
         <button
           onClick={() => setShowPayment(true)}
           disabled={!items.length}
-          className="w-full py-3.5 rounded-2xl text-sm font-bold text-white flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{ backgroundColor: 'var(--brand)' }}
-          onMouseEnter={e => { if (items.length) e.currentTarget.style.backgroundColor = 'var(--brand-strong)'; }}
-          onMouseLeave={e => e.currentTarget.style.backgroundColor = 'var(--brand)'}
+          className="w-full py-4 rounded-2xl font-bold text-white flex items-center justify-center gap-2 transition-all disabled:opacity-35 disabled:cursor-not-allowed"
+          style={{
+            fontSize: items.length ? '15px' : '14px',
+            backgroundColor: items.length ? '#16a34a' : 'var(--brand)',
+            boxShadow: items.length ? '0 4px 20px rgba(22,163,74,0.40)' : 'none',
+          }}
+          onMouseEnter={e => { if (items.length) e.currentTarget.style.backgroundColor = '#15803d'; }}
+          onMouseLeave={e => { if (items.length) e.currentTarget.style.backgroundColor = '#16a34a'; }}
           title="Cobrar (F8)"
         >
-          <CartIcon size={15} />
+          <CartIcon size={16} />
           Cobrar ${total.toLocaleString('es-AR')}
         </button>
       </div>
