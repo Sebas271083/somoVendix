@@ -19,3 +19,11 @@ export const requireAdmin = (req, res, next) => {
   }
   next();
 };
+
+// Acepta un arreglo de roles permitidos, ej: requireRole(['admin', 'manager'])
+export const requireRole = (roles) => (req, res, next) => {
+  if (!roles.includes(req.user?.role)) {
+    return res.status(403).json({ error: 'Acceso no autorizado para tu rol' });
+  }
+  next();
+};

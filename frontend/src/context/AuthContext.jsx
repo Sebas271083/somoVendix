@@ -64,6 +64,14 @@ export function AuthProvider({ children }) {
     return Boolean(tenant.features[feature]);
   };
 
+  // Jerarquía de roles: cashier < manager < admin
+  const ROLE_HIERARCHY = ['cashier', 'manager', 'admin'];
+  const canAccess = (minRole) => {
+    const userLevel = ROLE_HIERARCHY.indexOf(user?.role ?? 'cashier');
+    const required  = ROLE_HIERARCHY.indexOf(minRole);
+    return userLevel >= 0 && userLevel >= required;
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -72,6 +80,7 @@ export function AuthProvider({ children }) {
       logout,
       loading,
       isAdmin: user?.role === 'admin',
+      canAccess,
       trialDaysLeft,
       hasFeature,
     }}>

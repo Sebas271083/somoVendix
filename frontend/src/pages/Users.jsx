@@ -5,8 +5,9 @@ import { useAuth } from '../context/AuthContext.jsx';
 import toast from 'react-hot-toast';
 
 const ROLES = [
-  { key: 'admin', label: 'Administrador' },
-  { key: 'cashier', label: 'Cajero/Vendedor' },
+  { key: 'admin',   label: 'Administrador',   desc: 'Acceso total al sistema' },
+  { key: 'manager', label: 'Gerente',          desc: 'Todo excepto usuarios y configuración' },
+  { key: 'cashier', label: 'Cajero/Vendedor',  desc: 'Solo POS, productos y clientes' },
 ];
 
 const EMPTY = { name: '', email: '', password: '', role: 'cashier' };
@@ -17,6 +18,7 @@ function UserModal({ editing, onClose, onSaved }) {
       ? { name: editing.name, email: editing.email, role: editing.role, password: '' }
       : EMPTY
   );
+  const [sendEmail, setSendEmail] = useState(true);
   const [loading, setLoading] = useState(false);
 
   const f = (field) => (e) => setForm(p => ({ ...p, [field]: e.target.value }));
@@ -34,8 +36,8 @@ function UserModal({ editing, onClose, onSaved }) {
         await usersApi.update(editing.id, payload);
         toast.success('Usuario actualizado');
       } else {
-        await usersApi.create(form);
-        toast.success('Usuario creado');
+        await usersApi.create({ ...form, sendEmail });
+        toast.success(sendEmail ? 'Usuario creado — se envió el email con credenciales' : 'Usuario creado');
       }
       onSaved();
       onClose();
@@ -46,40 +48,58 @@ function UserModal({ editing, onClose, onSaved }) {
     }
   };
 
+  const selectedRole = ROLES.find(r => r.key === form.role);
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
-        <div className="flex items-center justify-between p-5 border-b">
-          <h2 className="font-semibold text-lg">{editing ? 'Editar usuario' : 'Nuevo usuario'}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
+      <div className="rounded-2xl w-full max-w-md shadow-2xl" style={{ backgroundColor: 'var(--surface)' }}>
+        <div className="flex items-center justify-between p-5 border-b" style={{ borderColor: 'var(--border)' }}>
+          <h2 className="font-semibold text-lg" style={{ color: 'var(--ink)' }}>{editing ? 'Editar usuario' : 'Nuevo usuario'}</h2>
+          <button onClick={onClose} style={{ color: 'var(--muted)' }} className="hover:opacity-70"><X size={18} /></button>
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1">Nombre *</label>
+            <label className="text-sm font-medium block mb-1" style={{ color: 'var(--ink)' }}>Nombre *</label>
             <input required value={form.name} onChange={f('name')} className="input" placeholder="Nombre completo" />
           </div>
           {!editing && (
             <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1">Email *</label>
+              <label className="text-sm font-medium block mb-1" style={{ color: 'var(--ink)' }}>Email *</label>
               <input required type="email" value={form.email} onChange={f('email')} className="input" placeholder="correo@ejemplo.com" />
             </div>
           )}
           {editing && (
-            <div className="bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-500">
-              Email: <span className="font-medium text-gray-700">{editing.email}</span>
+            <div className="rounded-lg px-3 py-2 text-sm" style={{ backgroundColor: 'var(--bg)', color: 'var(--muted)' }}>
+              Email: <span className="font-medium" style={{ color: 'var(--ink)' }}>{editing.email}</span>
             </div>
           )}
           <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1">Rol *</label>
+            <label className="text-sm font-medium block mb-1" style={{ color: 'var(--ink)' }}>Rol *</label>
             <select value={form.role} onChange={f('role')} className="input">
               {ROLES.map(r => <option key={r.key} value={r.key}>{r.label}</option>)}
             </select>
+            {selectedRole && (
+              <p className="text-xs mt-1" style={{ color: 'var(--muted)' }}>{selectedRole.desc}</p>
+            )}
           </div>
           {!editing && (
             <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1">Contraseña *</label>
+              <label className="text-sm font-medium block mb-1" style={{ color: 'var(--ink)' }}>Contraseña *</label>
               <input required type="password" value={form.password} onChange={f('password')} className="input" placeholder="Mínimo 6 caracteres" minLength={6} />
             </div>
+          )}
+          {!editing && (
+            <label className="flex items-center gap-2.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={sendEmail}
+                onChange={e => setSendEmail(e.target.checked)}
+                className="w-4 h-4 rounded accent-brand"
+              />
+              <span className="text-sm" style={{ color: 'var(--ink)' }}>
+                Enviar email con credenciales de acceso
+              </span>
+            </label>
           )}
           <div className="flex gap-3 pt-1">
             <button type="button" onClick={onClose} className="btn-secondary flex-1 justify-center">Cancelar</button>
@@ -142,12 +162,13 @@ function ResetPasswordModal({ user, onClose }) {
   );
 }
 
-const ROLE_LABELS = { admin: 'Administrador', cashier: 'Cajero/Vendedor', vendedor: 'Vendedor' };
-const ROLE_COLORS = { admin: 'bg-purple-100 text-purple-700', cashier: 'bg-teal-100 text-teal-700', vendedor: 'bg-teal-100 text-teal-700' };
+const ROLE_LABELS = { admin: 'Administrador', manager: 'Gerente', cashier: 'Cajero/Vendedor' };
+const ROLE_COLORS = { admin: 'bg-purple-100 text-purple-700', manager: 'bg-blue-100 text-blue-700', cashier: 'bg-teal-100 text-teal-700' };
 
 export default function Users() {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
+  const [maxUsers, setMaxUsers] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -156,7 +177,9 @@ export default function Users() {
   const load = async () => {
     setLoading(true);
     try {
-      setUsers(await usersApi.list());
+      const res = await usersApi.list();
+      setUsers(res.users ?? res);
+      setMaxUsers(res.max_users ?? null);
     } catch { toast.error('Error al cargar usuarios'); }
     finally { setLoading(false); }
   };
@@ -173,11 +196,23 @@ export default function Users() {
   return (
     <div className="flex-1 flex flex-col overflow-hidden p-5 gap-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <UserCog size={20} className="text-gray-500" />
           <h1 className="text-xl font-semibold">Usuarios</h1>
+          {maxUsers !== null ? (
+            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${users.length >= maxUsers ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500'}`}>
+              {users.length} / {maxUsers}
+            </span>
+          ) : (
+            <span className="text-xs text-gray-400">{users.length} {users.length === 1 ? 'usuario' : 'usuarios'}</span>
+          )}
         </div>
-        <button onClick={() => { setEditing(null); setShowForm(true); }} className="btn-primary">
+        <button
+          onClick={() => { setEditing(null); setShowForm(true); }}
+          disabled={maxUsers !== null && users.length >= maxUsers}
+          className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+          title={maxUsers !== null && users.length >= maxUsers ? `Límite de ${maxUsers} usuarios alcanzado` : ''}
+        >
           <Plus size={16} /> Nuevo usuario
         </button>
       </div>

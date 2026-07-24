@@ -106,6 +106,48 @@ export const emailService = {
     });
   },
 
+  async sendUserWelcome(to, userName, password, tenantName, subdomain) {
+    const transport = createTransport();
+    if (!transport) return;
+
+    const appUrl = process.env.APP_URL || 'https://gestix.app';
+    const loginUrl = subdomain ? `https://${subdomain}.gestix.app/login` : `${appUrl}/login`;
+
+    await transport.sendMail({
+      from: `"${tenantName}" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
+      to,
+      subject: `Bienvenido/a a ${tenantName} — Tus accesos al sistema`,
+      html: `
+        <div style="font-family:sans-serif;max-width:520px;margin:0 auto">
+          <div style="background:#0E2A1F;padding:24px;border-radius:12px 12px 0 0">
+            <h1 style="color:white;margin:0;font-size:20px">${tenantName}</h1>
+            <p style="color:rgba(255,255,255,0.6);margin:4px 0 0;font-size:13px">Sistema de gestión</p>
+          </div>
+          <div style="background:#f9fafb;padding:28px;border-radius:0 0 12px 12px;border:1px solid #e5e7eb;border-top:none">
+            <p style="color:#374151;margin:0 0 20px;font-size:15px">Hola <strong>${userName}</strong>, tu cuenta fue creada.</p>
+            <div style="background:white;border-radius:10px;padding:20px;border:1px solid #e5e7eb;margin-bottom:20px">
+              <table style="width:100%">
+                <tr>
+                  <td style="font-size:12px;color:#6b7280;padding:6px 0">Email de acceso</td>
+                  <td style="font-size:14px;font-weight:600;color:#111827;text-align:right">${to}</td>
+                </tr>
+                <tr>
+                  <td style="font-size:12px;color:#6b7280;padding:6px 0;border-top:1px solid #f3f4f6">Contraseña</td>
+                  <td style="font-size:14px;font-weight:600;color:#111827;text-align:right;font-family:monospace">${password}</td>
+                </tr>
+              </table>
+            </div>
+            <a href="${loginUrl}" style="display:block;background:#16a34a;color:white;text-decoration:none;text-align:center;padding:14px;border-radius:10px;font-weight:700;font-size:15px">
+              Ingresar al sistema →
+            </a>
+            <p style="color:#9ca3af;font-size:12px;margin:20px 0 0;text-align:center">
+              Te recomendamos cambiar tu contraseña después del primer ingreso.
+            </p>
+          </div>
+        </div>`,
+    });
+  },
+
   // Revisar todos los tenants y enviar alertas de stock bajo
   async checkAndSendAlerts() {
     if (!process.env.SMTP_HOST) return;

@@ -20,39 +20,40 @@ const S = {
   logo:       '#ffffff',
 };
 
+// minRole: 'cashier' (todos), 'manager' (manager + admin), 'admin' (solo admin)
 const NAV_SECTIONS = [
   {
     label: 'Ventas',
     items: [
       { to: '/pos',          icon: ShoppingCart, label: 'Punto de venta' },
-      { to: '/sales',        icon: FileText,     label: 'Facturación' },
-      { to: '/quotes',       icon: ScrollText,   label: 'Presupuestos' },
-      { to: '/credit-notes', icon: RotateCcw,    label: 'Notas de crédito' },
-      { to: '/installments', icon: CalendarDays, label: 'Cuotas' },
+      { to: '/sales',        icon: FileText,     label: 'Facturación',      minRole: 'manager' },
+      { to: '/quotes',       icon: ScrollText,   label: 'Presupuestos',     minRole: 'manager' },
+      { to: '/credit-notes', icon: RotateCcw,    label: 'Notas de crédito', minRole: 'manager' },
+      { to: '/installments', icon: CalendarDays, label: 'Cuotas',           minRole: 'manager' },
     ],
   },
   {
     label: 'Inventario',
     items: [
       { to: '/products',    icon: Package,       label: 'Productos' },
-      { to: '/stock',       icon: Layers,        label: 'Stock' },
-      { to: '/stocktaking', icon: ClipboardList, label: 'Inventario físico' },
+      { to: '/stock',       icon: Layers,        label: 'Stock',             minRole: 'manager' },
+      { to: '/stocktaking', icon: ClipboardList, label: 'Inventario físico', minRole: 'manager' },
     ],
   },
   {
     label: 'Finanzas',
     items: [
       { to: '/cash-register', icon: Archive,      label: 'Caja diaria' },
-      { to: '/cash-flow',     icon: TrendingUp,   label: 'Flujo de caja',    feature: 'cashflow' },
-      { to: '/expenses',      icon: TrendingDown, label: 'Gastos',           feature: 'expenses' },
-      { to: '/receivables',   icon: CreditCard,   label: 'Cuentas a cobrar', feature: 'receivables' },
+      { to: '/cash-flow',     icon: TrendingUp,   label: 'Flujo de caja',    feature: 'cashflow',    minRole: 'manager' },
+      { to: '/expenses',      icon: TrendingDown, label: 'Gastos',           feature: 'expenses',    minRole: 'manager' },
+      { to: '/receivables',   icon: CreditCard,   label: 'Cuentas a cobrar', feature: 'receivables', minRole: 'manager' },
     ],
   },
   {
     label: 'Compras',
     items: [
-      { to: '/suppliers',       icon: Truck,        label: 'Proveedores',       feature: 'suppliers' },
-      { to: '/purchase-orders', icon: ShoppingCart, label: 'Órdenes de compra', feature: 'suppliers' },
+      { to: '/suppliers',       icon: Truck,        label: 'Proveedores',       feature: 'suppliers', minRole: 'manager' },
+      { to: '/purchase-orders', icon: ShoppingCart, label: 'Órdenes de compra', feature: 'suppliers', minRole: 'manager' },
     ],
   },
 ];
@@ -87,7 +88,7 @@ function SectionLabel({ children }) {
 }
 
 export default function Sidebar({ open, onClose }) {
-  const { user, tenant, logout, isAdmin, trialDaysLeft, hasFeature } = useAuth();
+  const { user, tenant, logout, isAdmin, canAccess, trialDaysLeft, hasFeature } = useAuth();
   const { dark, toggle } = useTheme();
   const days = trialDaysLeft();
 
@@ -149,7 +150,9 @@ export default function Sidebar({ open, onClose }) {
         <NavItem to="/" icon={Home} label="Inicio" end onNavigate={onClose} />
 
         {NAV_SECTIONS.map(({ label, items }) => {
-          const visible = items.filter(({ feature }) => !feature || hasFeature(feature));
+          const visible = items.filter(({ feature, minRole = 'cashier' }) =>
+            canAccess(minRole) && (!feature || hasFeature(feature))
+          );
           if (!visible.length) return null;
           return (
             <div key={label}>
@@ -168,10 +171,10 @@ export default function Sidebar({ open, onClose }) {
           <SectionLabel>Gestión</SectionLabel>
           <div className="space-y-0.5">
             <NavItem to="/customers"  icon={Users}     label="Clientes"      onNavigate={onClose} />
-            {hasFeature('crm')     && <NavItem to="/campaigns"       icon={Mail}      label="Campañas"      onNavigate={onClose} />}
-            {isAdmin               && <NavItem to="/users"           icon={UserCog}   label="Usuarios"      onNavigate={onClose} />}
-            {hasFeature('reports') && <NavItem to="/reports"         icon={BarChart2} label="Reportes"      onNavigate={onClose} />}
-            {isAdmin               && <NavItem to="/settings"        icon={Settings}  label="Configuración" onNavigate={onClose} />}
+            {hasFeature('crm')     && canAccess('manager') && <NavItem to="/campaigns"       icon={Mail}      label="Campañas"      onNavigate={onClose} />}
+            {isAdmin                                        && <NavItem to="/users"           icon={UserCog}   label="Usuarios"      onNavigate={onClose} />}
+            {hasFeature('reports') && canAccess('manager') && <NavItem to="/reports"         icon={BarChart2} label="Reportes"      onNavigate={onClose} />}
+            {isAdmin                                        && <NavItem to="/settings"        icon={Settings}  label="Configuración" onNavigate={onClose} />}
           </div>
         </div>
       </nav>
@@ -188,7 +191,7 @@ export default function Sidebar({ open, onClose }) {
               {user?.name}
             </p>
             <p className="text-[11px]" style={{ color: S.text }}>
-              {{ admin: 'Administrador', cashier: 'Cajero/Vendedor', vendedor: 'Vendedor' }[user?.role] ?? user?.role}
+              {{ admin: 'Administrador', manager: 'Gerente', cashier: 'Cajero/Vendedor' }[user?.role] ?? user?.role}
             </p>
           </div>
           <button
