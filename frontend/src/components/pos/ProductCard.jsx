@@ -1,4 +1,4 @@
-import { Plus, Layers, BookOpen, Pen, FileText, Pencil, Folder, Palette, ShoppingBag, Paperclip, Package, GraduationCap, Ban } from 'lucide-react';
+import { Plus, Layers, BookOpen, Pen, FileText, Pencil, Folder, Palette, ShoppingBag, Paperclip, Package, GraduationCap, Ban, Check } from 'lucide-react';
 import { useCart } from '../../context/CartContext.jsx';
 import { imgUrl } from '../../services/api.js';
 import toast from 'react-hot-toast';
@@ -44,6 +44,7 @@ export default function ProductCard({ product, onAdd }) {
   return (
     <div
       className="cursor-pointer transition-all select-none rounded-2xl overflow-hidden flex flex-col"
+      aria-label={product.name}
       style={{
         backgroundColor: 'var(--surface)',
         border: cartQty > 0 ? `2px solid ${accent}` : '1px solid var(--border)',
@@ -122,6 +123,99 @@ export default function ProductCard({ product, onAdd }) {
           }
         </button>
       </div>
+    </div>
+  );
+}
+
+// ── Fila horizontal para mobile ──────────────────────────────
+export function MobileProductRow({ product, onAdd }) {
+  const { items } = useCart();
+  const cartQty = items.reduce((sum, i) => i.product_id === product.id ? sum + i.quantity : sum, 0);
+
+  const tracksStock = !product.has_variants && product.stock !== null;
+  const isOutOfStock = tracksStock && product.stock <= 0;
+  const isLowStock   = tracksStock && product.stock > 0 && product.stock <= product.min_stock;
+
+  const catKey = normalize(product.category_name);
+  const { Icon = Package, color = '#8A988F' } = CATEGORY_MAP[catKey] || {};
+  const accent = product.category_color || color;
+
+  const handleClick = () => {
+    if (isOutOfStock) {
+      toast(`Sin stock: ${product.name}`, { icon: '⚠️', duration: 1800 });
+      return;
+    }
+    onAdd(product);
+  };
+
+  return (
+    <div
+      className="flex items-center gap-3 px-4 py-3 transition-all active:scale-[0.98]"
+      style={{
+        backgroundColor: cartQty > 0 ? `${accent}10` : 'transparent',
+        opacity: isOutOfStock ? 0.45 : 1,
+        cursor: 'pointer',
+      }}
+      onClick={handleClick}
+    >
+      {/* Thumbnail */}
+      <div
+        className="w-12 h-12 rounded-2xl flex-shrink-0 flex items-center justify-center overflow-hidden"
+        style={{ backgroundColor: `${accent}18` }}
+      >
+        {product.image_url ? (
+          <img
+            src={imgUrl(product.image_url)}
+            alt=""
+            className="w-full h-full object-cover"
+            onError={e => { e.currentTarget.style.display = 'none'; }}
+          />
+        ) : (
+          <Icon size={22} strokeWidth={1.3} style={{ color: accent, opacity: 0.8 }} />
+        )}
+      </div>
+
+      {/* Nombre + precio */}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold leading-tight truncate" style={{ color: 'var(--ink)' }}>
+          {product.name}
+        </p>
+        <div className="flex items-center gap-2 mt-0.5">
+          <span className="text-sm font-bold" style={{ color: accent }}>
+            ${Number(product.price).toLocaleString('es-AR')}
+          </span>
+          {isOutOfStock ? (
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-red-100 text-red-600">Sin stock</span>
+          ) : isLowStock ? (
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-orange-100 text-orange-600">
+              ↓ {product.stock} u.
+            </span>
+          ) : null}
+          {!!product.has_variants && (
+            <span className="flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded"
+                  style={{ backgroundColor: 'var(--bg)', color: 'var(--muted)' }}>
+              <Layers size={9} /> var.
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Botón agregar */}
+      <button
+        className="flex-shrink-0 w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-base transition-all"
+        style={{
+          backgroundColor: isOutOfStock ? 'var(--bg)' : cartQty > 0 ? accent : `${accent}20`,
+          color: isOutOfStock ? 'var(--muted)' : cartQty > 0 ? '#fff' : accent,
+        }}
+        onClick={e => { e.stopPropagation(); handleClick(); }}
+      >
+        {isOutOfStock
+          ? <Ban size={16} />
+          : cartQty > 0
+            ? <span className="text-sm font-bold">{cartQty}</span>
+            : <Plus size={20} strokeWidth={2.5} />
+        }
+      </button>
     </div>
   );
 }

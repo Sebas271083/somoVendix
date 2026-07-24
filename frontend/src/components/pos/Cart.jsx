@@ -10,8 +10,10 @@ export default function Cart({ className = '' }) {
     items, customer, setCustomer, discount, setDiscount,
     grossSubtotal, itemDiscountTotal, subtotal, discountAmount, tax, total, itemCount,
     clearCart,
-    tickets, activeId, newTicket, switchTicket, closeTicket,
+    tickets, activeId, newTicket, switchTicket, closeTicket, closeEmptyTickets,
   } = useCart();
+
+  const emptyCount = tickets.filter(t => t.items.length === 0).length;
 
   const [showPayment, setShowPayment] = useState(false);
   const [showCustomer, setShowCustomer] = useState(false);
@@ -49,7 +51,7 @@ export default function Cart({ className = '' }) {
       <div className="flex items-center gap-1 px-2 pt-2 pb-0 border-b overflow-x-auto"
            style={{ backgroundColor: 'var(--bg)', borderColor: 'var(--border)' }}>
         {tickets.map((t, i) => (
-          <div key={t.id} className="flex items-center flex-shrink-0">
+          <div key={t.id} className="flex items-center flex-shrink-0 group">
             <button
               onClick={() => switchTicket(t.id)}
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-t-lg text-xs font-medium transition-colors"
@@ -71,12 +73,12 @@ export default function Cart({ className = '' }) {
             </button>
             {tickets.length > 1 && (
               <button
-                onClick={() => closeTicket(t.id)}
-                className="ml-0.5 hover:text-red-400 transition-colors"
+                onClick={e => { e.stopPropagation(); closeTicket(t.id); }}
+                className="ml-0.5 p-1 rounded transition-colors opacity-50 group-hover:opacity-100 hover:!opacity-100 hover:text-red-500"
                 title="Cerrar ticket"
-                style={{ color: 'var(--border)' }}
+                style={{ color: 'var(--muted)' }}
               >
-                <X size={10} />
+                <X size={12} />
               </button>
             )}
           </div>
@@ -91,6 +93,20 @@ export default function Cart({ className = '' }) {
         >
           <Plus size={13} />
         </button>
+
+        {/* Botón cerrar todos los vacíos — aparece cuando hay 2+ tickets vacíos */}
+        {emptyCount >= 2 && (
+          <button
+            onClick={closeEmptyTickets}
+            className="flex-shrink-0 ml-auto mr-1 text-[10px] font-medium px-2 py-1 rounded-lg transition-colors whitespace-nowrap"
+            style={{ color: 'var(--muted)', backgroundColor: 'var(--bg)' }}
+            onMouseEnter={e => { e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.backgroundColor = '#fee2e2'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.backgroundColor = 'var(--bg)'; }}
+            title="Cerrar todos los tickets vacíos"
+          >
+            Cerrar vacíos
+          </button>
+        )}
       </div>
 
       {/* Header */}

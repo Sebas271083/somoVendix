@@ -121,6 +121,20 @@ export function CartProvider({ children }) {
 
   const switchTicket = useCallback((id) => setActiveId(id), []);
 
+  const closeEmptyTickets = useCallback(() => {
+    setTickets(prev => {
+      const nonEmpty = prev.filter(t => t.items.length > 0);
+      if (nonEmpty.length === 0) {
+        const keep = prev.find(t => t.id === activeId) ?? prev[0];
+        setActiveId(keep.id);
+        return [keep];
+      }
+      const activeInNonEmpty = nonEmpty.some(t => t.id === activeId);
+      if (!activeInNonEmpty) setActiveId(nonEmpty[0].id);
+      return nonEmpty;
+    });
+  }, [activeId]);
+
   const closeTicket = useCallback((id) => {
     setTickets((prev) => {
       if (prev.length <= 1) {
@@ -157,7 +171,7 @@ export function CartProvider({ children }) {
         setCustomer, setDiscount,
         addItem, updateQuantity, updateItemDiscount, updateItemNotes, removeItem, clearCart,
         grossSubtotal, itemDiscountTotal, subtotal, discountAmount, tax, total, itemCount,
-        tickets, activeId, newTicket, switchTicket, closeTicket,
+        tickets, activeId, newTicket, switchTicket, closeTicket, closeEmptyTickets,
       }}
     >
       {children}
