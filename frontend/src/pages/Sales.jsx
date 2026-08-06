@@ -33,7 +33,7 @@ export default function Sales() {
 
   useEffect(() => {
     settingsApi.getAll().then(setSettings).catch(() => {});
-    usersApi.list().then(setUsers).catch(() => {});
+    usersApi.list().then(res => setUsers(Array.isArray(res) ? res : (res?.users ?? []))).catch(() => {});
   }, []);
 
   const load = async () => {
