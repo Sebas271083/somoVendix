@@ -178,8 +178,9 @@ export default function Users() {
     setLoading(true);
     try {
       const res = await usersApi.list();
-      setUsers(res.users ?? res);
-      setMaxUsers(res.max_users ?? null);
+      const usersArray = Array.isArray(res) ? res : (Array.isArray(res?.users) ? res.users : []);
+      setUsers(usersArray);
+      setMaxUsers(res?.max_users ?? null);
     } catch { toast.error('Error al cargar usuarios'); }
     finally { setLoading(false); }
   };

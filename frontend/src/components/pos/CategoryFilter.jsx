@@ -1,4 +1,5 @@
-export default function CategoryFilter({ categories, selected, onChange }) {
+export default function CategoryFilter({ categories = [], selected, onChange }) {
+  const safeCategories = Array.isArray(categories) ? categories : [];
   return (
     <div className="flex gap-1.5 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
       <button
@@ -14,7 +15,7 @@ export default function CategoryFilter({ categories, selected, onChange }) {
         Todos
       </button>
 
-      {categories.map((cat) => (
+      {safeCategories.map((cat) => (
         <button
           key={cat.id}
           onClick={() => onChange(cat.id)}

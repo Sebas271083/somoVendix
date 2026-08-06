@@ -25,7 +25,9 @@ function MobileSkeletonRow() {
   );
 }
 
-export default function ProductGrid({ products, onAdd, loading }) {
+export default function ProductGrid({ products = [], onAdd, loading }) {
+  const safeProducts = Array.isArray(products) ? products : [];
+
   if (loading) {
     return (
       <div className="h-full overflow-y-auto">
@@ -41,7 +43,7 @@ export default function ProductGrid({ products, onAdd, loading }) {
     );
   }
 
-  if (!products.length) {
+  if (!safeProducts.length) {
     return (
       <div className="h-full flex items-center justify-center text-sm" style={{ color: 'var(--muted)' }}>
         No se encontraron productos
@@ -53,14 +55,14 @@ export default function ProductGrid({ products, onAdd, loading }) {
     <div className="h-full overflow-y-auto">
       {/* Mobile: lista horizontal (1 columna) */}
       <div className="sm:hidden flex flex-col divide-y divide-[var(--border)]">
-        {products.map(p => (
+        {safeProducts.map(p => (
           <MobileProductRow key={p.id} product={p} onAdd={onAdd} />
         ))}
       </div>
 
       {/* Desktop: grilla de tarjetas */}
       <div className="hidden sm:grid sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 p-3 content-start">
-        {products.map(p => (
+        {safeProducts.map(p => (
           <ProductCard key={p.id} product={p} onAdd={onAdd} />
         ))}
       </div>
