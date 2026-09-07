@@ -51,7 +51,8 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res.data,
   (err) => {
-    if (err.response?.status === 401) {
+    const isLoginRequest = err.config?.url?.replace(/^\/+/, '') === 'auth/login';
+    if (err.response?.status === 401 && !isLoginRequest) {
       localStorage.removeItem('pos_token');
       localStorage.removeItem('pos_user');
       localStorage.removeItem('pos_tenant');
@@ -81,7 +82,8 @@ adminAxios.interceptors.request.use((config) => {
 adminAxios.interceptors.response.use(
   (res) => res.data,
   (err) => {
-    if (err.response?.status === 401) {
+    const isLoginRequest = err.config?.url?.replace(/^\/+/, '') === 'login';
+    if (err.response?.status === 401 && !isLoginRequest) {
       localStorage.removeItem('admin_token');
       window.location.href = '/admin/login';
     }
